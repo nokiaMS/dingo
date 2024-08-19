@@ -60,6 +60,11 @@ public class Starter {
     @Parameter(names = "--tenant", description = "Tenant id.", order = 2)
     private Long tenant;
 
+    /**
+     * executor启动函数。
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         Starter starter = new Starter();
         JCommander commander = JCommander.newBuilder().addObject(starter).build();
