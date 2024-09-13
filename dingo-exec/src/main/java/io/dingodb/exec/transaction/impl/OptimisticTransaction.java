@@ -291,6 +291,7 @@ public class OptimisticTransaction extends BaseTransaction {
             .maxCommitTs(0L)
             .lockExtraDatas(TransactionUtil.toLockExtraDataList(cacheToObject.getTableId(), cacheToObject.getPartId(), txnId,
                 TransactionType.OPTIMISTIC.getCode(), mutations.size()))
+            .minCommitTs(TransactionManager.getOnePcMinCommitTs())
             .build();
         try {
             StoreInstance store = Services.KV_STORE.getInstance(cacheToObject.getTableId(), cacheToObject.getPartId());

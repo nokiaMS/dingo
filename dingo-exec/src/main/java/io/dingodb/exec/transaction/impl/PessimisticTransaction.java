@@ -442,6 +442,7 @@ public class PessimisticTransaction extends BaseTransaction {
                     txnId,
                     TransactionType.PESSIMISTIC.getCode(),
                     mutations.size()))
+            .minCommitTs(TransactionManager.getOnePcMinCommitTs())
             .build();
         try {
             StoreInstance store = Services.KV_STORE.getInstance(

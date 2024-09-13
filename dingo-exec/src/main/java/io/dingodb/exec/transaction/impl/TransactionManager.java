@@ -107,6 +107,10 @@ public final class TransactionManager {
         return TsoService.getDefault().tso();
     }
 
+    public static long getOnePcMinCommitTs() {
+        return TsoService.getDefault().tso();
+    }
+
     public static long nextTimestamp() {
         return TsoService.getDefault().tso();
     }

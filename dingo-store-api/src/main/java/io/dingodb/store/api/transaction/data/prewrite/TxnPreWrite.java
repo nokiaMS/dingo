@@ -65,6 +65,8 @@ public class TxnPreWrite {
     // the extra_data executor want to store in lock
     @Builder.Default
     List<LockExtraData> lockExtraDatas = Collections.emptyList();
+    @Builder.Default
+    private long minCommitTs = 0L;
 
     CommonId txnId;
 }
