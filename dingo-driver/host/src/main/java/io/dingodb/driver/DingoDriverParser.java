@@ -782,7 +782,7 @@ public final class DingoDriverParser extends DingoParser {
                                        ITransaction transaction,
                                        PlanProfile planProfile) {
         boolean isTxn = false;
-//        boolean isNotTransactionTable = false;
+        boolean isNotTransactionTable = false;
         // for UT test
         if ((sqlNode.getKind() == SqlKind.SELECT || sqlNode.getKind() == SqlKind.DELETE) && tables.isEmpty()) {
             return false;
@@ -810,17 +810,17 @@ public final class DingoDriverParser extends DingoParser {
                 tableList.add(name);
             }
             if (engine == null || !engine.contains("TXN")) {
-//                isNotTransactionTable = true;
+                isNotTransactionTable = true;
             } else {
                 isTxn = true;
             }
-//            if (isTxn && isNotTransactionTable) {
-//                throw new RuntimeException("Transactional tables cannot be mixed with non-transactional tables");
-//            }
-//            if (transaction != null && transaction.getType() != NONE && isNotTransactionTable) {
-//                LogUtils.info(log, "transaction txnId is {}, table name is {}", transaction.getTxnId(), name);
-//                throw new RuntimeException("Non-transaction tables cannot be used in transactions");
-//            }
+            if (isTxn && isNotTransactionTable) {
+                throw new RuntimeException("Transactional tables cannot be mixed with non-transactional tables");
+            }
+            if (transaction != null && transaction.getType() != NONE && isNotTransactionTable) {
+                LogUtils.info(log, "transaction txnId is {}, table name is {}", transaction.getTxnId(), name);
+                throw new RuntimeException("Non-transaction tables cannot be used in transactions");
+            }
         }
         return isTxn;
     }
