@@ -16,27 +16,42 @@
 
 package io.dingodb.common.ddl;
 
+/**
+ * ddl操作类型。
+ */
 public enum ActionType {
-    ActionNone(0),
-    ActionCreateSchema(1),
-    ActionDropSchema(2),
-    ActionCreateTable(3),
-    ActionDropTable(4),
-    ActionAddColumn(5),
-    ActionDropColumn(6),
-    ActionAddIndex(7),
-    ActionDropIndex(8),
-    ActionTruncateTable(11),
-    ActionModifyColumn(12),
-    ActionAddPrimaryKey(32),
-    ActionCreateTables(60),
+    ActionNone(0),              //none.
+    ActionCreateSchema(1),      //create schema.
+    ActionDropSchema(2),        //drop schema.
+    ActionCreateTable(3),       //create table.
+    ActionDropTable(4),         //drop table.
+    ActionAddColumn(5),         //add column.
+    ActionDropColumn(6),        //drop column.
+    ActionAddIndex(7),          //add index.
+    ActionDropIndex(8),         //drop index.
+    ActionTruncateTable(11),    //truncate table.
+    ActionModifyColumn(12),     //modify column.
+    ActionAddPrimaryKey(32),    //add primary key.
+    ActionCreateTables(60),     //create tables.
     ;
+
+    /**
+     * 存储枚举数值。
+     */
     private final int code;
 
+    /**
+     * 构造函数。
+     * @param code
+     */
     ActionType(int code) {
         this.code = code;
     }
 
+    /**
+     * 获得枚举值。
+     * @return
+     */
     public long getCode() {
         return code;
     }

@@ -53,12 +53,21 @@ public final class DdlUtil {
     public static final byte[] indexElementKey = "_idx_".getBytes();
     public static final byte[] addColElementKey = "_addCol_".getBytes();
     public static final String tenantPrefix = String.format("tenant:%d", TenantConstant.TENANT_ID);
+
+    /**
+     * ddl job并发key。
+     */
     public static final String ADDING_DDL_JOB_CONCURRENT_KEY = String.format("%s:%s", tenantPrefix, ADDING_DDL_JOB_CONCURRENT);
 
     public static Map<String, String> tableMap = new ConcurrentHashMap<>();
 
     public static boolean mdlEnable = true;
+
+    /**
+     * 是否需要删除schema之间的差异对象。
+     */
     public static boolean delDiff = true;
+
     public static boolean historyJobEtcd = false;
     public static boolean genSchemaVerEtcd = false;
     public static String ddlTmpTableName = "replicaTable";

@@ -39,6 +39,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+/**
+ * job table操作相关工具函数。
+ */
 @Slf4j
 public final class JobTableUtil {
     private static final String updateDDLJobSQL = "update mysql.dingo_ddl_job set job_meta = '%s' where job_id = %d";
@@ -123,8 +126,15 @@ public final class JobTableUtil {
         }
     }
 
+    /**
+     * 返回job对象：
+     *  从dingo_ddl_job中查询生成的ddlJob并返回。
+     * @param session
+     * @return  返回一个从表中获得ddjJob的函数对象。
+     */
     public static Pair<List<DdlJob>, String> getGenerateJobs(Session session) {
         try {
+            //返回函数对象。
             return getJobs(session, general, job1 -> {
                 Session session1 = SessionUtil.INSTANCE.getSession();
                 try {
@@ -160,16 +170,25 @@ public final class JobTableUtil {
         return Pair.of(resList.isEmpty(), null);
     }
 
+    /**
+     * 从dingo_ddl_job表中获得job对象。
+     * @param session   当前session.
+     * @param jobType   job类型。
+     * @param filter    过滤方式。
+     * @return
+     */
     public static Pair<List<DdlJob>, String> getJobs(
         Session session,
         int jobType,
         Function<DdlJob, Pair<Boolean, String>> filter
     ) {
+        //组织查询语句。
         String sql = String.format(getJobsSQL, DdlContext.INSTANCE.excludeJobIDs());
         List<DdlJob> ddlJobList = new ArrayList<>();
         //List<CompletableFuture<Pair<DdlJob, String>>> futureList = new ArrayList<>();
         try {
             long start = System.currentTimeMillis();
+            //生成查询语句，获得ddlJob的行。
             List<Object[]> resList = session.executeQuery(sql);
             long cost = System.currentTimeMillis() - start;
 

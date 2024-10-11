@@ -101,9 +101,17 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Slf4j
 public class TransactionStoreInstance {
 
+    /**
+     * store服务实例。
+     */
     private final StoreService storeService;
     private final IndexService indexService;
+
+    /**
+     * 分区id。
+     */
     private final CommonId partitionId;
+
     private final DocumentService documentService;
 
     private final static int VectorKeyLen = 17;
@@ -153,46 +161,79 @@ public class TransactionStoreInstance {
         }
     }
 
+    /**
+     * 预写主键请求。
+     * @param txnPreWrite   请求内容。
+     * @param timeOut       请求超时时间。
+     * @return
+     */
     public boolean txnPreWrite(TxnPreWrite txnPreWrite, long timeOut) {
+        //更新mutation的key以满足于store之间的接口需求。
         txnPreWrite.getMutations().stream().peek($ -> $.setKey(setId($.getKey()))).forEach($ -> $.getKey()[0] = 't');
+        //发送事务给store。
         return txnPreWriteRealKey(txnPreWrite, timeOut);
     }
 
+    /**
+     * 发送key修改之后的预写请求给store。
+     * @param txnPreWrite
+     * @param timeOut       preWrite操作的超时时间。
+     * @return
+     */
     public boolean txnPreWriteRealKey(TxnPreWrite txnPreWrite, long timeOut) {
+        //获得当前时间。
         long start = System.currentTimeMillis();
         try {
+            //写入冲突时的重试次数。
             int n = 1;
+
+            //获得事务的隔离级别。
             IsolationLevel isolationLevel = txnPreWrite.getIsolationLevel();
             List<Long> resolvedLocks = new ArrayList<>();
             while (true) {
+                //把txnPreWrite对象映射为store sdk提供的TxnPrewriteRequest结构。
                 TxnPrewriteRequest request = MAPPER.preWriteTo(txnPreWrite);
                 TxnPrewriteResponse response;
 
+                //如果request超过了一次rpc允许的数据大小，那么1pc退化为2pc。
                 if(request.isTryOnePc() && request.sizeOf() > TransactionUtil.maxRpcDataSize) {
                     throw new OnePcMaxSizeExceedException("one pc phase Data size exceed in 1pc, max:" + TransactionUtil.maxRpcDataSize + " cur:" +request.sizeOf());
                 }
 
                 long start1 = System.currentTimeMillis();
+
+                //获得第一个mutation。
                 Mutation mutation = request.getMutations().get(0);
+
+                //调用sdk接口写入存储。
                 if (mutation.getVector() == null && mutation.getDocument() == null) {
+                    //非向量非文档数据，调用store服务写入到store中。（此操作会阻塞等待store返回结果。）
                     response = storeService.txnPrewrite(txnPreWrite.getStartTs(), request);
                 } else if (mutation.getDocument() != null) {
                     response = documentService.txnPrewrite(txnPreWrite.getStartTs(), request);
                 } else {
                     response = indexService.txnPrewrite(txnPreWrite.getStartTs(), request);
                 }
+
+                //更新测量数据。
                 long sub = System.currentTimeMillis() - start1;
                 DingoMetrics.timer("txnPreWriteRpc").update(sub, TimeUnit.MILLISECONDS);
+
                 if (response.getKeysAlreadyExist() != null && !response.getKeysAlreadyExist().isEmpty()) {
                     getJoinedPrimaryKey(txnPreWrite, response.getKeysAlreadyExist());
                 }
+
+                //判断返回结果。
                 if (response.getTxnResult() == null || response.getTxnResult().isEmpty()) {
+                    //按照store设计，如果返回中OnePcCommitTs为0，那么退化为2pc，不需要再次执行pre-write，而是需要单独执行commit操作。
                     if (request.isTryOnePc() && response.getOnePcCommitTs() == 0) {
                         //1pc failed, Need 2pc commit, but not 2pc pre-write.
                         throw new OnePcNeedTwoPcCommit("one pc phase 1pc commit ts is 0 in response, so need 2pc commit, ts:" + response.getOnePcCommitTs());
                     }
+                    //提交成功，直接返回。
                     return true;
                 }
+
                 ResolveLockStatus resolveLockStatus = writeResolveConflict(
                     response.getTxnResult(),
                     isolationLevel.getCode(),
@@ -202,6 +243,7 @@ public class TransactionStoreInstance {
                 );
                 if (resolveLockStatus == ResolveLockStatus.LOCK_TTL
                     || resolveLockStatus == ResolveLockStatus.TXN_NOT_FOUND) {
+                    //如果在超时时间范围内操作没有成功，则抛出异常。
                     if (timeOut < 0) {
                         throw new RuntimeException("startTs:" + txnPreWrite.getStartTs() + " resolve lock timeout");
                     }
@@ -210,8 +252,14 @@ public class TransactionStoreInstance {
                         if (n < TxnVariables.WaitFixNum) {
                             lockTtl = TxnVariables.WaitTime * n;
                         }
+
+                        //每次循环中，线程的等待时间越来越长。
                         Thread.sleep(lockTtl);
+
+                        //增加重试次数值，以每次循环时调整线程休眠时间。
                         n++;
+
+                        //剩余的超时时间不断减少。
                         timeOut -= lockTtl;
                         LogUtils.info(log, "txnPreWrite lockInfo wait {} ms end.", lockTtl);
                     } catch (InterruptedException e) {
@@ -220,6 +268,7 @@ public class TransactionStoreInstance {
                 }
             }
         } finally {
+            //更新测量信息。
             long sub = System.currentTimeMillis() - start;
             DingoMetrics.timer("txnPreWrite").update(sub, TimeUnit.MILLISECONDS);
         }
@@ -582,6 +631,11 @@ public class TransactionStoreInstance {
         return response.getTxnResult() == null;
     }
 
+    /**
+     * 发送TxnCheckTxnStatusRequest消息给store。
+     * @param txnCheckStatus    执行器生成的待转为TxnCheckTxnStatusRequest的消息。
+     * @return  返回store执行TxnCheckTxnStatusRequest的结果。
+     */
     public static TxnCheckTxnStatusResponse txnCheckTxnStatus(TxnCheckStatus txnCheckStatus) {
         long start = System.currentTimeMillis();
         byte[] primaryKey = txnCheckStatus.getPrimaryKey();
@@ -609,10 +663,22 @@ public class TransactionStoreInstance {
         }
     }
 
+    /**
+     * 解决写入冲突。
+     * @param txnResult
+     * @param isolationLevel
+     * @param startTs
+     * @param resolvedLocks
+     * @param funName
+     * @return
+     */
     public ResolveLockStatus writeResolveConflict(List<TxnResultInfo> txnResult, int isolationLevel,
                                                    long startTs, List<Long> resolvedLocks, String funName) {
         long start = System.currentTimeMillis();
+
+        //设置写入冲突解决的起始状态。
         ResolveLockStatus resolveLockStatus = ResolveLockStatus.NONE;
+
         for (TxnResultInfo txnResultInfo : txnResult) {
             LogUtils.info(log, "{} txnResultInfo : {}", funName, txnResultInfo);
             LockInfo lockInfo = txnResultInfo.getLocked();

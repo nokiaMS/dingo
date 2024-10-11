@@ -16,18 +16,39 @@
 
 package io.dingodb.tso;
 
+/**
+ * TsoService接口定义了一个tso服务需要具备的接口。
+ */
 public interface TsoService {
 
     static TsoService getDefault() {
         return TsoServiceProvider.getDefault().get();
     }
 
+    /**
+     * 返回一个时间戳。
+     * @return
+     */
     long tso();
 
+    /**
+     * 时间戳转tso。
+     * @param timestamp
+     * @return
+     */
     long tso(long timestamp);
 
+    /**
+     * 返回一个时间戳。
+     * @return
+     */
     long timestamp();
 
+    /**
+     * tso转时间戳。
+     * @param tso
+     * @return
+     */
     long timestamp(long tso);
 
 }

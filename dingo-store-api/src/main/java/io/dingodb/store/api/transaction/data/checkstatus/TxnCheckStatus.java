@@ -21,10 +21,18 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * 事务状态检测消息：
+ *      用于映射为store的TxnCheckTxnStatusRequest消息。
+ *      此消息用于检测事务状态。
+ */
 @Getter
 @Setter
 @Builder
 public class TxnCheckStatus {
+    /**
+     * 事务的隔离级别。
+     */
     private IsolationLevel isolationLevel;
     // Primary key and lock ts together to locate the primary lock of a transaction.
     private byte[] primaryKey;

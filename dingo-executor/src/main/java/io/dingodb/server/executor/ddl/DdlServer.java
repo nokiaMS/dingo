@@ -54,10 +54,17 @@ public final class DdlServer {
     private DdlServer() {
     }
 
+    /**
+     * 监控ddlJob队列。
+     */
     public static void watchDdlJob() {
+        //创建ddl job事件监听器。
         DdlJobListenerImpl ddlJobListener = new DdlJobListenerImpl(DdlServer::startLoadDDLAndRun);
+        //构造ddl job事件源。
         DdlJobEventSource ddlJobEventSource = DdlJobEventSource.ddlJobEventSource;
+        //添加ddl job事件的事件监听器。
         ddlJobEventSource.addListener(ddlJobListener);
+        //删除保存的schema差异对象。
         if (DdlUtil.delDiff) {
             delVerSchemaDiff();
         }
@@ -85,13 +92,21 @@ public final class DdlServer {
         }).start();
     }
 
+    /**
+     * 监听coordinator上ddl job并发key ADDING_DDL_JOB_CONCURRENT_KEY的变化，发生变化则调用DdlServer::startLoadDDLAndRunByEtcd处理函数。
+     */
     public static void watchDdlKey() {
         //String resourceKey = String.format("tenantId:{%d}", TenantConstant.TENANT_ID);
+
+        //构建coordinator的监控服务对象。
         WatchService watchService = new WatchService(Configuration.coordinators());
         //LockService lockService = new LockService(resourceKey, Configuration.coordinators(), 45000);
+
+        //构造kv对象，key为ADDING_DDL_JOB_CONCURRENT_KEY
         Kv kv = Kv.builder().kv(KeyValue.builder()
             .key(DdlUtil.ADDING_DDL_JOB_CONCURRENT_KEY.getBytes()).build()).build();
         try {
+            //监听coordinator上的ADDING_DDL_JOB_CONCURRENT_KEY的变化，如果有变动，会调用处理函数DdlServer::startLoadDDLAndRunByEtcd进行处理。
             watchService.watchAllOpEvent(kv, DdlServer::startLoadDDLAndRunByEtcd);
         } catch (Exception e) {
             LogUtils.error(log, e.getMessage(), e);
@@ -117,6 +132,11 @@ public final class DdlServer {
         }
     }
 
+    /**
+     * ddl job event的响应函数，获得event并进行处理。
+     * @param ddlJobEvent
+     * @return
+     */
     public static boolean startLoadDDLAndRun(DdlJobEvent ddlJobEvent) {
         Session session = SessionUtil.INSTANCE.getSession();
         try {
@@ -131,26 +151,43 @@ public final class DdlServer {
         return true;
     }
 
+    /**
+     * 开始ddl的消息监控与分发。
+     */
     public static void startDispatchLoop() {
         // ticker/watchDdlJobEvent/watchDdlJobCoordinator
         ExecutionEnvironment env = ExecutionEnvironment.INSTANCE;
+        //只有ddl owner才能分发消息。
         while (!env.ddlOwner.get()) {
             Utils.sleep(1000);
         }
+        //监控ddlJob队列。
         watchDdlJob();
+        //监听ddl key。
         watchDdlKey();
+
         Session session = SessionUtil.INSTANCE.getSession();
         session.setAutoCommit(true);
         Executors.scheduleWithFixedDelayAsync("DdlWorker", () -> startLoadDDLAndRunBySchedule(session), 10000, 1000, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * 定时任务，每隔1秒执行一次。
+     * @param session
+     */
     public static void startLoadDDLAndRunBySchedule(Session session) {
         //LogUtils.info(log, "startJob by local schedule");
+        //从表中查询ddl job并运行。
         startLoadDDLAndRun(session);
     }
 
+    /**
+     * 处理ddl job.
+     * @param session
+     */
     public static void startLoadDDLAndRun(Session session) {
         ExecutionEnvironment env = ExecutionEnvironment.INSTANCE;
+        //只有owner才能够处理ddl job。
         // if owner continue,not break;
         if (!env.ddlOwner.get()
             || DdlContext.INSTANCE.waiting.get()
@@ -162,11 +199,21 @@ public final class DdlServer {
             Utils.sleep(1000);
             return;
         }
+
+        //加载并处理ddl job。
         loadDDLJobsAndRun(session, JobTableUtil::getGenerateJobs, DdlContext.INSTANCE.getDdlJobPool());
     }
 
+    /**
+     * 加载并处理ddl job：
+     *      此函数从dingo_ddl_job表中查找job对象，并转交给ddl worker对象进行处理。
+     * @param session   当前session。
+     * @param getJob    job获取函数，从dingo_ddl_job中获得表ddlJob行并转换为job对象。
+     * @param pool      ddl worker pool对象。
+     */
     static synchronized void loadDDLJobsAndRun(Session session, Function<Session, Pair<List<DdlJob>, String>> getJob, DdlWorkerPool pool) {
         long start = System.currentTimeMillis();
+        //获得dingo_ddl_job表中的jobs。
         Pair<List<DdlJob>, String> res = getJob.apply(session);
         if (res == null || res.getValue() != null) {
             return;
@@ -183,6 +230,7 @@ public final class DdlServer {
             }
             for (DdlJob ddlJob : ddlJobs) {
                 DdlWorker worker = pool.borrowObject();
+                //调用ddl worker对象对ddl job进行处理。
                 delivery2worker(worker, ddlJob, pool);
             }
         } catch (Exception e) {
@@ -217,6 +265,7 @@ public final class DdlServer {
         DdlContext dc = DdlContext.INSTANCE;
         dc.insertRunningDDLJobMap(ddlJob.getId());
         LogUtils.info(log, "delivery 2 worker, jobId:{}, state:{}", ddlJob.getId(), ddlJob.getState());
+        //并发方式执行ddl-worker。
         Executors.submit("ddl-worker", () -> {
             Timer.Context timeCtx = DingoMetrics.getTimeContext("ddlJobRun");
             try {
@@ -252,7 +301,9 @@ public final class DdlServer {
                         dc.getWc().setOnceVal(false);
                     }
                 }
-                Pair<Long, String> res = worker.handleDDLJobTable(dc, ddlJob);
+
+                //处理ddl job。
+                Pair<Long, String> res = worker.handleDDLJobTable(dc, ddlJob);  //把ddl操作发送给coordinator。
                 if (res.getValue() != null) {
                     LogUtils.error(log, "[ddl] handle ddl job failed, jobId:{}, error:{}", ddlJob.getId(), res.getValue());
                 } else {

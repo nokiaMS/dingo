@@ -22,6 +22,9 @@ import io.dingodb.driver.mysql.util.BufferUtil;
 import io.netty.buffer.ByteBuf;
 import lombok.Builder;
 
+/**
+ * 返回结果中列元信息包。
+ */
 @Builder
 public class ColumnPacket extends MysqlPacket {
     public String catalog;

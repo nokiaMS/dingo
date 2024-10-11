@@ -143,6 +143,9 @@ import static io.dingodb.common.util.Optional.mapOrNull;
 import static io.dingodb.common.util.PrivilegeUtils.getRealAddress;
 import static org.apache.calcite.util.Static.RESOURCE;
 
+/**
+ * 重新实现了calcite的ddlExecutor。
+ */
 @Slf4j
 public class DingoDdlExecutor extends DdlExecutorImpl {
     public static final DingoDdlExecutor INSTANCE = new DingoDdlExecutor();
@@ -497,15 +500,23 @@ public class DingoDdlExecutor extends DdlExecutorImpl {
         long start = System.currentTimeMillis();
         LogUtils.info(log, "DDL execute: {}", drop);
         String connId = (String) context.getDataContext().get("connId");
+
+        //获得当前snapshot的schema，如果显式指定了，那么使用指定的schema；如果没有显式指定，那么使用默认的schema。
         final SubSnapshotSchema schema = getSnapShotSchema(drop.name, context, drop.ifExists);
         if (schema == null) {
             return;
         }
+
+        //从SqlDropTable的name字段解析出tableName字符串。
         final String tableName = getTableName(drop.name);
+
+        //获得schema对象。
         SchemaInfo schemaInfo = schema.getSchemaInfo(schema.getSchemaName());
         if (schemaInfo == null) {
             throw DINGO_RESOURCE.unknownSchema(schema.getSchemaName()).ex();
         }
+
+        //获得指定的table对象。
         Table table = schema.getTableInfo(tableName);
         if (table == null) {
             if (drop.ifExists) {
@@ -1703,27 +1714,42 @@ public class DingoDdlExecutor extends DdlExecutorImpl {
             .build();
     }
 
+    /**
+     * 获得snapshot的schema.
+     * @param id
+     * @param context
+     * @param ifExist   标志位：不存在显示指定的schema的时候是否抛出异常。
+     * @return  schema对象。
+     */
     private static SubSnapshotSchema getSnapShotSchema(
         @NonNull SqlIdentifier id, CalcitePrepare.@NonNull Context context, boolean ifExist
     ) {
+        //获得root schema。
         CalciteSchema rootSchema = context.getMutableRootSchema();
+        //root schema不能为空，如果为空，那么抛出异常，异常中包括信息"No root schema."。
         assert rootSchema != null : "No root schema.";
 
         List<String> names = new ArrayList<>(id.names);
         Schema schema = null;
 
         if (names.size() == 1) {
-            final List<String> defaultSchemaPath = context.getDefaultSchemaPath();
+            //处理只有表明，没有显式指定schema的情况。
+            // 存储表名的时候，如果names长度为1，那么就是只有表名，没有schema名称等其他前缀。
+            final List<String> defaultSchemaPath = context.getDefaultSchemaPath();  //获得当前默认schema。
             assert defaultSchemaPath.size() == 1 : "Assume that the schema path has only one level.";
+            //返回默认schema对象。
             schema = Optional.mapOrNull(rootSchema.getSubSchema(defaultSchemaPath.get(0), false), $ -> $.schema);
         } else {
+            //如果显示指定了schema，那么获得schema对象。
             CalciteSchema subSchema = rootSchema.getSubSchema(names.get(0), false);
+            //如果schema对象不为空，那么获得schema对象，否则抛出异常。
             if (subSchema != null) {
                 schema = subSchema.schema;
             } else if (!ifExist) {
                 throw DINGO_RESOURCE.unknownSchema(names.get(0)).ex();
             }
         }
+        //返回得到的schema作为snapshot schema。
         return (SubSnapshotSchema) schema;
     }
 

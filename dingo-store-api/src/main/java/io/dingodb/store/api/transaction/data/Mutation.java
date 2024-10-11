@@ -23,6 +23,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * 一个mutation代表对指定key的一次操作。
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,10 +33,30 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class Mutation {
+    /**
+     * 操作类型。
+     */
     private Op op;
+
+    /**
+     * 操作的key值。
+     */
     private byte[] key;
+
+    /**
+     * 操作的value值。
+     */
     private byte[] value;
+
     private long forUpdateTs;
+
+    /**
+     * 向量值。
+     */
     private VectorWithId vector;
+
+    /**
+     * 文档值。
+     */
     private DocumentWithId document;
 }

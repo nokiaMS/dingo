@@ -18,24 +18,53 @@ package io.dingodb.driver.mysql.packet;
 
 import io.netty.buffer.ByteBuf;
 
+/**
+ * mysql响应包都继承于此结构。
+ */
 public abstract class MysqlPacket {
 
     // utf8mb4;
     public static final short charsetNumber = 45;
     public static final byte decimals = 0x00;
 
+    /**
+     * 包长度。
+     */
     public int packetLength;
 
+    /**
+     * 包序号（唯一且自增。）
+     */
     public byte packetId;
 
+    /**
+     * 返回包长度。
+     * @return
+     */
     public abstract int calcPacketSize();
 
+    /**
+     * 获得包信息。
+     * @return
+     */
     protected abstract String getPacketInfo();
 
+    /**
+     * 从包中读取数据存放到data中。
+     * @param data
+     */
     public abstract void read(byte[] data);
 
+    /**
+     * 向buffer中写入包。
+     * @param buffer
+     */
     public abstract void write(ByteBuf buffer);
 
+    /**
+     * 包序列化。
+     * @return
+     */
     @Override
     public String toString() {
         return new StringBuilder().append(getPacketInfo()).append("{length=")

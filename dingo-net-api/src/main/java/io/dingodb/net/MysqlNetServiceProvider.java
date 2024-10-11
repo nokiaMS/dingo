@@ -18,8 +18,12 @@ package io.dingodb.net;
 
 import java.util.ServiceLoader;
 
+/**
+ * mysql net service 提供者。
+ */
 public interface MysqlNetServiceProvider {
     /**
+     * 获得默认的mysql服务提供者实例。
      * Get default net service provider impl.
      */
     static MysqlNetServiceProvider getDefault() {
@@ -27,6 +31,7 @@ public interface MysqlNetServiceProvider {
     }
 
     /**
+     * 获得mysql网络服务的实现接口。
      * Get net service instance.
      */
     MysqlNetService get();

@@ -271,7 +271,7 @@ public class DdlJob {
         this.errorCount += nu;
     }
 
-    public void encodeError(String error) {
+    public void  encodeError(String error) {
         if (error != null) {
             this.error = Base64.getEncoder().encodeToString(error.getBytes());
         }

@@ -67,11 +67,18 @@ public final class LoadInfoSchemaTask {
         }
     }
 
+    /**
+     * 监控全局schema版本号。
+     */
     public static void watchGlobalSchemaVer() {
+        //构建kv对象。
         Kv kv = Kv.builder().kv(KeyValue.builder()
             .key(io.dingodb.meta.InfoSchemaService.globalSchemaVer.getBytes()).build()).build();
+
+        //常见监听器实例，这些实例是监控coordinator上的变动的。
         WatchService watchService = new WatchService(Configuration.coordinators());
         try {
+            //监控kv包含的key的变动，一旦发生变动，则调用响应函数进行处理。
             watchService.watchAllOpEvent(kv, LoadInfoSchemaTask::loadInfoByEtcd);
         } catch (Exception e) {
             LogUtils.error(log, e.getMessage(), e);
@@ -79,9 +86,13 @@ public final class LoadInfoSchemaTask {
         }
     }
 
+    /**
+     * 定时任务监听 infoSchema变动并执行相应同步动作。
+     */
     public static void scheduler() {
         long lease = DdlContext.INSTANCE.getLease();
         while (!Thread.interrupted()) {
+            //加载infoSchema.
             loadInfo();
             Utils.sleep(lease);
         }
@@ -101,6 +112,9 @@ public final class LoadInfoSchemaTask {
         return "done";
     }
 
+    /**
+     * 加载info Schema信息。
+     */
     public static void loadInfo() {
         try {
             reload();
@@ -115,6 +129,9 @@ public final class LoadInfoSchemaTask {
         }
     }
 
+    /**
+     * 重新加载。
+     */
     public static void reload() {
         long start = System.currentTimeMillis();
         ExecutionEnvironment env = ExecutionEnvironment.INSTANCE;
@@ -151,14 +168,21 @@ public final class LoadInfoSchemaTask {
         }
     }
 
+    /**
+     * 加载info schema信息。
+     * @param infoSchemaService
+     * @param startTs
+     * @return
+     */
     public static LoadIsResponse loadInfoSchema(InfoSchemaService infoSchemaService, long startTs) {
         // get needSchemaVersion from meta
         // get schema from cache by needVersion
-        // if not null and return
+        // if not null and returnN
         // if null get currentVersion
         // version compare diff little get increment infoSchema
         // or load total infoSchema insert into cache
 
+        //从infoSchema service中获得需要更新到的版本号。
         long neededSchemaVersion = infoSchemaService.getSchemaVersionWithNonEmptyDiff();
         InfoCache infoCache = InfoCache.infoCache;
 
@@ -252,6 +276,7 @@ public final class LoadInfoSchemaTask {
         if (!ScopeVariables.runDdl()) {
             return;
         }
+
         long start = System.currentTimeMillis();
         String sql = "select job_id, version, table_ids from mysql.dingo_mdl_info where version <= %d";
         sql = String.format(sql, schemaVer);
@@ -295,4 +320,5 @@ public final class LoadInfoSchemaTask {
         RelatedSchemaChange relatedSchemaChange;
         String error;
     }
+
 }

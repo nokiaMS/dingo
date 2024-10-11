@@ -216,6 +216,12 @@ public class DingoParser {
         return convert(sqlNode, true);
     }
 
+    /**
+     * 分析树转换为查询树。
+     * @param sqlNode   分析树。
+     * @param needsValidation
+     * @return
+     */
     public RelRoot convert(@NonNull SqlNode sqlNode, boolean needsValidation) {
         HintPredicate hintPredicate = (hint, rel) -> true;
         HintStrategyTable hintStrategyTable = new HintStrategyTable.Builder()
@@ -231,6 +237,7 @@ public class DingoParser {
             hintStrategyTable
         );
 
+        //分析树转换为查询树。
         RelRoot relRoot = sqlToRelConverter.convertQuery(sqlNode, needsValidation, true);
 
         RelNode relNode = relRoot.rel;

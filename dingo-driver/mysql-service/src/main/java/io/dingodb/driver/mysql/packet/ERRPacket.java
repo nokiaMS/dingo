@@ -27,6 +27,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 
+/**
+ * mysql error响应包。
+ */
 @Slf4j
 public class ERRPacket extends MysqlPacket {
 

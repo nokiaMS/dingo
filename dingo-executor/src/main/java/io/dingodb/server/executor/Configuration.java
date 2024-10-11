@@ -65,6 +65,10 @@ public class Configuration {
         return INSTANCE.resourceTag;
     }
 
+    /**
+     * 获得并返回配置文件中的mysql端口号。
+     * @return  返回mysql端口号。
+     */
     public static Integer mysqlPort() {
         return INSTANCE.mysqlPort;
     }

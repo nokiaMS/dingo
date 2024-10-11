@@ -23,20 +23,40 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 
 import java.util.List;
 
+/**
+ * mysql消息解码器。
+ */
 public class MysqlDecoder extends ByteToMessageDecoder {
 
+    /**
+     * 解码。
+     * @param ctx
+     * @param in
+     * @param out
+     * @throws Exception
+     */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         Optional.ifPresent(read(in), out::add);
     }
 
+    /**
+     * 从参数buf中读取并解析消息。
+     * @param buf   in消息字节数组。
+     * @return
+     */
     public ByteBuf read(ByteBuf buf) {
+        //消息长度小于4直接返回空。
         if (buf.readableBytes() < 4) {
             return null;
         }
         buf.markReaderIndex();
+
+        //获得消息头。
         byte[] headLength = new byte[3];
         buf.readBytes(headLength);
+
+        //读取消息内容长度字段。
         int contentLength = readLength(headLength);
         // mysql msg:  3bytes -> headLen  1 byte -> packetId  headLen bytes -> content(sql,...)
         if (!buf.isReadable(contentLength + 1)) {
@@ -44,9 +64,15 @@ public class MysqlDecoder extends ByteToMessageDecoder {
             return null;
         }
 
+        //返回读取的消息内容。
         return buf.readBytes(contentLength + 1);
     }
 
+    /**
+     * 读取消息长度字段。
+     * @param data
+     * @return
+     */
     public int readLength(byte[] data) {
         int position = 0;
         int i = data[position++] & 0xff;

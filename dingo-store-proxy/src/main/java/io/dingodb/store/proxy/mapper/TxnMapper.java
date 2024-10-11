@@ -45,23 +45,58 @@ import org.mapstruct.Mappings;
 
 import java.util.List;
 
+/**
+ * 事务mapper，提供了store接口与executor中使用的类之间的映射关系。
+ */
 public interface TxnMapper {
 
+    /**
+     * TxnPreWrite对象映射为TxnPrewriteRequest对象。
+     * @param preWrite
+     * @return
+     */
     @Mapping(source = "isolationLevel", target = "context.isolationLevel")
     TxnPrewriteRequest preWriteTo(TxnPreWrite preWrite);
 
+    /**
+     * TxnCommit对象映射为TxnCommitRequest。
+     * @param commit
+     * @return
+     */
     @Mapping(source = "isolationLevel", target = "context.isolationLevel")
     TxnCommitRequest commitTo(TxnCommit commit);
 
+    /**
+     * TxnPessimisticLock对象映射为TxnPessimisticLockRequest。
+     * @param pessimisticLock
+     * @return
+     */
     @Mapping(source = "isolationLevel", target = "context.isolationLevel")
     TxnPessimisticLockRequest pessimisticLockTo(TxnPessimisticLock pessimisticLock);
 
+    /**
+     * TxnPessimisticRollBack对象映射为TxnPessimisticRollbackRequest对象。
+     * @param txnPessimisticRollBack
+     * @return
+     */
     @Mapping(source = "isolationLevel", target = "context.isolationLevel")
     TxnPessimisticRollbackRequest pessimisticRollBackTo(TxnPessimisticRollBack txnPessimisticRollBack);
 
+    /**
+     * TxnBatchRollBack对象映射为sdk的TxnBatchRollBack对象。
+     * @param rollBack
+     * @return
+     */
     @Mapping(source = "isolationLevel", target = "context.isolationLevel")
     TxnBatchRollbackRequest rollbackTo(TxnBatchRollBack rollBack);
 
+    /**
+     * 各域映射为TxnScanRequest对象。
+     * @param startTs
+     * @param isolationLevel
+     * @param range
+     * @return
+     */
     @Mappings({
         @Mapping(source = "isolationLevel", target = "context.isolationLevel"),
         @Mapping(source = "range.start", target = "range.range.startKey"),
@@ -71,14 +106,36 @@ public interface TxnMapper {
     })
     TxnScanRequest scanTo(long startTs, IsolationLevel isolationLevel, StoreInstance.Range range);
 
+    /**
+     * 各域映射为TxnBatchGetRequest对象。
+     * @param startTs
+     * @param isolationLevel
+     * @param keys
+     * @return
+     */
     @Mapping(source = "isolationLevel", target = "context.isolationLevel")
     TxnBatchGetRequest batchGetTo(long startTs, IsolationLevel isolationLevel, List<byte[]> keys);
 
+    /**
+     * TxnCheckStatus域映射为TxnCheckTxnStatusRequest对象。
+     * @param txnCheck
+     * @return
+     */
     TxnCheckTxnStatusRequest checkTxnTo(TxnCheckStatus txnCheck);
 
+    /**
+     * TxnResolveLock域映射为TxnResolveLockRequest对象。
+     * @param txnResolve
+     * @return
+     */
     @Mapping(source = "isolationLevel", target = "context.isolationLevel")
     TxnResolveLockRequest resolveTxnTo(TxnResolveLock txnResolve);
 
+    /**
+     * 执行器的Op对象映射为sdk的Op。
+     * @param op
+     * @return
+     */
     default Op opTo(io.dingodb.store.api.transaction.data.Op op) {
         return Op.forNumber(op.getCode());
     }

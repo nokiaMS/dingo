@@ -16,6 +16,15 @@
 
 package io.dingodb.store.api.transaction.data.resolvelock;
 
+/**
+ * 解决锁冲突解决过程的状态。
+ */
 public enum ResolveLockStatus {
-    NONE, LOCK_TTL, ROLLBACK, COMMIT, PESSIMISTIC_ROLLBACK, MIN_COMMIT_TS_PUSHED, TXN_NOT_FOUND
+    NONE,       //写入冲突解决的起始状态。
+    LOCK_TTL,
+    ROLLBACK,
+    COMMIT,
+    PESSIMISTIC_ROLLBACK,
+    MIN_COMMIT_TS_PUSHED,
+    TXN_NOT_FOUND
 }

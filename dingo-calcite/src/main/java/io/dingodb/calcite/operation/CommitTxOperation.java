@@ -21,17 +21,31 @@ import io.dingodb.transaction.api.TransactionService;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * commit 命令响应函数。
+ */
 public class CommitTxOperation implements DdlOperation {
 
+    /**
+     * 当前连接对象。
+     */
     private Connection connection;
 
+    /**
+     * 构造函数。
+     * @param connection    当前连接对象。
+     */
     public CommitTxOperation(Connection connection) {
         this.connection = connection;
     }
 
+    /**
+     * 接口重载，sql命令的执行函数。
+     */
     @Override
     public void execute() {
         try {
+            //获得事务服务实例并执行“提交”操作。
             TransactionService.getDefault().commit(connection);
         } catch (SQLException e) {
             throw new RuntimeException(e);

@@ -16,6 +16,9 @@
 
 package io.dingodb.meta;
 
+/**
+ * schema同步服务接口。
+ */
 public interface SchemaSyncerService {
     static SchemaSyncerService root() {
         return SchemaSyncerServiceProvider.getDefault().root();
@@ -23,8 +26,19 @@ public interface SchemaSyncerService {
 
     void updateSelfVersion(long startTs, long jobId, long schemaVersion);
 
+    /**
+     * owner负责确保所有节点都同步到了最新的版本。
+     * @param jobId
+     * @param latestVer
+     * @param reorg
+     * @return
+     */
     String ownerCheckAllVersions(long jobId, long latestVer, boolean reorg);
 
+    /**
+     * owner更新全局globalSchemaVer版本号。
+     * @param version
+     */
     void ownerUpdateGlobalVersion(long version);
 
     void removeSelfVersionPath();

@@ -33,10 +33,17 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @Slf4j
 public class DdlService implements io.dingodb.meta.DdlService {
 
+    /**
+     * 创建一个DdlService单例。
+     */
     public static final DdlService ROOT = new DdlService();
 
     @AutoService(DdlServiceProvider.class)
     public static class Provider implements DdlServiceProvider {
+        /**
+         * 返回DdlService单例。
+         * @return
+         */
         @Override
         public io.dingodb.meta.DdlService root() {
             return ROOT;
@@ -90,6 +97,10 @@ public class DdlService implements io.dingodb.meta.DdlService {
         DdlHandler.dropIndex(schemaName, tableName, indexName);
     }
 
+    /**
+     * 获得本地缓存中最新的InfoSchema。
+     * @return
+     */
     @Override
     public InfoSchema getIsLatest() {
         return InfoCache.infoCache.getLatest();

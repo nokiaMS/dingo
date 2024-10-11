@@ -54,15 +54,25 @@ import static io.dingodb.net.netty.Constant.API_ERROR;
 import static io.dingodb.net.netty.Constant.API_OK;
 import static java.lang.reflect.Proxy.newProxyInstance;
 
+/**
+ * api注册器实现类。
+ */
 @Slf4j
 public class ApiRegistryImpl implements ApiRegistry, InvocationHandler {
 
+    /**
+     * 默认的api注册器实现类。
+     */
     public static final ApiRegistryImpl INSTANCE = new ApiRegistryImpl();
 
     private ApiRegistryImpl() {
         register(Ping.class, Ping.INSTANCE);
     }
 
+    /**
+     * 返回api注册器实现类实例。
+     * @return
+     */
     public static ApiRegistryImpl instance() {
         return INSTANCE;
     }
@@ -71,6 +81,12 @@ public class ApiRegistryImpl implements ApiRegistry, InvocationHandler {
     private final Map<String, Method> declarationMap = new ConcurrentHashMap<>();
     private final Map<String, KeyValueTransferCodeC> argumentsCodeCMap = new ConcurrentHashMap<>();
 
+    /**
+     * 注册api对象实例。
+     * @param api       api接口类。
+     * @param defined   api接口的实现对象。
+     * @param <T>
+     */
     @Override
     public <T> void register(Class<T> api, T defined) {
         for (Method method : api.getMethods()) {
@@ -140,6 +156,13 @@ public class ApiRegistryImpl implements ApiRegistry, InvocationHandler {
         return proxy(api, new FixedChannelProxy<>((Channel) channel, defined, timeout));
     }
 
+    /**
+     * api代理。
+     * @param api
+     * @param locationSupplier
+     * @return
+     * @param <T>
+     */
     @Override
     public <T> T proxy(Class<T> api, Supplier<Location> locationSupplier) {
         return proxy(api, locationSupplier, null);
@@ -150,17 +173,45 @@ public class ApiRegistryImpl implements ApiRegistry, InvocationHandler {
         return proxy(api, locationSupplier, null, timeout);
     }
 
+    /**
+     * api代理。
+     * @param api
+     * @param locationSupplier
+     * @param defined
+     * @return
+     * @param <T>
+     */
     @Override
     public <T> T proxy(Class<T> api, Supplier<Location> locationSupplier, T defined) {
         return proxy(api, locationSupplier, defined, NetConfiguration.apiTimeout());
     }
 
+    /**
+     * api代理。
+     * @param api
+     * @param locationSupplier
+     * @param defined
+     * @param timeout
+     * @return
+     * @param <T>
+     */
     @Override
     public <T> T proxy(Class<T> api, Supplier<Location> locationSupplier, T defined, int timeout) {
+        /**
+         * 创建了一个API代理，通过此代理把请求发送给远端。
+         */
         return proxy(api, new RandomChannelProxy<>(locationSupplier, defined, timeout));
     }
 
+    /**
+     * api代理。
+     * @param api
+     * @param apiProxy
+     * @return
+     * @param <T>
+     */
     private <T> T proxy(Class<T> api, ApiProxy apiProxy) {
+        //获得一个代理实例。
         return (T) newProxyInstance(api.getClassLoader(), new Class[] {api}, apiProxy);
     }
 

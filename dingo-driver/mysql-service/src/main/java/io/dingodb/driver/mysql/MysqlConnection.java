@@ -44,6 +44,9 @@ public class MysqlConnection {
 
     public SocketChannel channel;
 
+    /**
+     * 实际存储的是DingoConnection类。
+     */
     @Getter
     private Connection connection;
 
@@ -51,6 +54,9 @@ public class MysqlConnection {
 
     public AuthPacket authPacket;
 
+    /**
+     * 心跳处理对象。
+     */
     public MysqlIdleStateHandler mysqlIdleStateHandler;
 
     public volatile Boolean passwordExpire = false;

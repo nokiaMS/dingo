@@ -149,15 +149,30 @@ public class SchedulerService implements io.dingodb.scheduler.SchedulerService {
         }
     }
 
+    /**
+     * 定时器服务实例初始化。
+     */
     public void init() {
         SessionUtil.INSTANCE.initPool();
+
+        /**
+         * 全局schema版本号监控服务。
+         */
         new Thread(
             LoadInfoSchemaTask::watchGlobalSchemaVer
         ).start();
+
         new Thread(
             LoadInfoSchemaTask::watchExpSchemaVer
         ).start();
-        new Thread(LoadInfoSchemaTask::scheduler).start();
+
+        /**
+         * 启动定时任务以监听infoSchema变动。
+         */
+        new Thread(
+            LoadInfoSchemaTask::scheduler
+        ).start();
+
         new Thread(MetaLockCheckHandler::mdlCheckLoop).start();
         this.add("analyzeTable", "0 0 0/1 * * ?", new AnalyzeScanTask());
         this.add("licenseCheck", "0 */1 * * * ?", new LicenseCheckTask());

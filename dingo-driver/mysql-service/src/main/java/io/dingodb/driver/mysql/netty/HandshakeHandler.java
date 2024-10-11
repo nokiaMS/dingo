@@ -63,18 +63,28 @@ import javax.net.ssl.SSLEngine;
 import static io.dingodb.common.mysql.Versions.PROTOCOL_VERSION;
 import static io.dingodb.common.mysql.constant.ServerStatus.SERVER_STATUS_AUTOCOMMIT;
 
+/**
+ * mysql handshake处理类。
+ */
 @ChannelHandler.Sharable
 @Slf4j
 public class HandshakeHandler extends SimpleChannelInboundHandler<ByteBuf> {
     ExecutionEnvironment env = ExecutionEnvironment.INSTANCE;
     private static volatile AtomicInteger threadId = new AtomicInteger(0);
 
+    /**
+     * 关联的connection对象。
+     */
     public MysqlConnection mysqlConnection;
 
     private byte[] fullSeed;
 
     public UserService userService;
 
+    /**
+     * 构造函数，关联connection对象到类中。
+     * @param mysqlConnection
+     */
     public HandshakeHandler(MysqlConnection mysqlConnection) {
         this.mysqlConnection = mysqlConnection;
     }
@@ -96,6 +106,11 @@ public class HandshakeHandler extends SimpleChannelInboundHandler<ByteBuf> {
     }
 
 
+    /**
+     * 当有连接到来是会调用此函数。
+     * @param ctx
+     * @param msg
+     */
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
         boolean isSSL = false;

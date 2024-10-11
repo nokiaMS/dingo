@@ -39,6 +39,10 @@ public interface SchemaSyncerServiceProvider {
         }
     }
 
+    /**
+     * 返回一个默认对象实例。
+     * @return
+     */
     SchemaSyncerService root();
 
     static SchemaSyncerServiceProvider getDefault() {

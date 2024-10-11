@@ -21,6 +21,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * ldap段配置。
+ */
 @Getter
 @Setter
 @ToString

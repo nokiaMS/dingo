@@ -196,13 +196,21 @@ public final class Utils {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * 客户端字符集名称转换为server支持的字符集名称。
+     * @param characterSet  客户端字符集名称。
+     * @return  返回转换后的字符集名称。
+     */
     public static String getCharacterSet(String characterSet) {
+        //如果客户端没有设置字符集，那么默认是utf8.
         if (characterSet == null) {
             return "utf8";
         }
+        //如果客户端设置的字符集为utf8mb4，因为服务端不支持此字符集，那么直接映射成utf8字符集。
         if ("utf8mb4".equalsIgnoreCase(characterSet)) {
             return "utf8";
         }
+        //返回转换后的字符集。
         return characterSet;
     }
 

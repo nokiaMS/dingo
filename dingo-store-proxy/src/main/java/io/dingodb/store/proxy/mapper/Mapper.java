@@ -20,6 +20,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
+/**
+ * mapper类，用于构建两个类之间的自动映射。
+ * https://www.jb51.net/program/3069992rz.htm  ---- java映射机制说明。
+ *
+ *  MAPPER：返回编译时生成的MAPPER实现类对象。
+ *
+ */
 @org.mapstruct.Mapper(
     unmappedSourcePolicy = ReportingPolicy.IGNORE,
     unmappedTargetPolicy = ReportingPolicy.IGNORE

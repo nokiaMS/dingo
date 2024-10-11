@@ -23,6 +23,9 @@ import java.math.BigInteger;
 
 import static io.dingodb.driver.mysql.util.BufferUtil.NEGATIVE_INC_VAL;
 
+/**
+ * OK响应报文。
+ */
 public class OKPacket extends MysqlPacket {
     public static final byte HEADER = 0x00;
 

@@ -18,10 +18,20 @@ package io.dingodb.driver.mysql.netty;
 
 import com.google.auto.service.AutoService;
 
+/**
+ * mysql net service provider实现类。
+ */
 @AutoService(io.dingodb.net.MysqlNetServiceProvider.class)
 public class MysqlNetServiceProvider implements io.dingodb.net.MysqlNetServiceProvider {
+    /**
+     * 一个静态实例，默认的mysql net service。
+     */
     public static final MysqlNetService mysqlNetService = new MysqlNetService();
 
+    /**
+     * 获得mysql net service默认实例。
+     * @return
+     */
     @Override
     public io.dingodb.net.MysqlNetService get() {
         return mysqlNetService;

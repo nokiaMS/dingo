@@ -20,10 +20,20 @@ import io.dingodb.common.mysql.MysqlMessage;
 import io.dingodb.driver.mysql.util.BufferUtil;
 import io.netty.buffer.ByteBuf;
 
+/**
+ * 列个数包，包含了返回结果中总共有多少列的信息。
+ */
 public class ColumnsNumberPacket extends MysqlPacket {
 
+    /**
+     * 列数量。
+     */
     public long columnsNumber;
 
+    /**
+     * 读取信息到data中。
+     * @param data
+     */
     @Override
     public void read(byte[] data) {
         MysqlMessage message = new MysqlMessage(data);

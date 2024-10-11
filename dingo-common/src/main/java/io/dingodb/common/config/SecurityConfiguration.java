@@ -22,16 +22,30 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * 配置文件中security段配置。
+ */
 @Getter
 @Setter
 @ToString
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class SecurityConfiguration {
+    //cipher段配置。
     private CipherConfiguration cipher;
+
+    //ldap段配置。
     private LdapConfiguration ldap;
+
+    //verify字段。
     private boolean verify = true;
+
+    //auth字段。
     private boolean auth = true;
 
+    /**
+     * 获得配置文件中的security.auth字段，如果不配置默认为true。
+     * @return
+     */
     public static boolean isAuth() {
         return Optional.ofNullable(DingoConfiguration.instance())
             .map(DingoConfiguration::getSecurity)
@@ -39,6 +53,10 @@ public class SecurityConfiguration {
             .orElse(true);
     }
 
+    /**
+     * 获得配置文件中的verify字段，如果没有设置，默认值为true。
+     * @return
+     */
     public static boolean isVerify() {
         return Optional.ofNullable(DingoConfiguration.instance())
             .map(DingoConfiguration::getSecurity)
@@ -46,6 +64,10 @@ public class SecurityConfiguration {
             .orElse(true);
     }
 
+    /**
+     * 获得配置文件中的security.cipher段。
+     * @return
+     */
     public static CipherConfiguration cipher() {
         return Optional.ofNullable(DingoConfiguration.instance())
             .map(DingoConfiguration::getSecurity)
@@ -53,6 +75,10 @@ public class SecurityConfiguration {
             .orNull();
     }
 
+    /**
+     * 获得配置文件中的security.ldap段。
+     * @return
+     */
     public static LdapConfiguration ldap() {
         return Optional.ofNullable(DingoConfiguration.instance())
             .map(DingoConfiguration::getSecurity)

@@ -20,22 +20,56 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 
+/**
+ * 定义了schema对象的变动。
+ * @Data:自动为各种属性生成相应函数。
+ */
 @ToString
 @Data
 public class SchemaDiff {
+    /**
+     * 当前schema的版本号。
+     */
     long version;
+
+    /**
+     * ddl操作类型。
+     */
     ActionType type;
+
+    /**
+     * 当前操作的shema id。
+     */
     long schemaId;
+
+    /**
+     * 当前操作的表id。
+     */
     long tableId;
 
     long oldTableId;
     long oldSchemaId;
+
+    /**
+     * 当前操作的表名称。
+     */
     String tableName;
 
     boolean regenerateSchemaMap;
 
     AffectedOption[] affectedOpts;
 
+    /**
+     * 构造函数。
+     * @param version
+     * @param type
+     * @param schemaId
+     * @param tableId
+     * @param oldTableId
+     * @param oldSchemaId
+     * @param regenerateSchemaMap
+     * @param affectedOpts
+     */
     @Builder
     public SchemaDiff(long version,
                       ActionType type,
@@ -55,6 +89,9 @@ public class SchemaDiff {
         this.affectedOpts = affectedOpts;
     }
 
+    /**
+     * 默认构造函数。
+     */
     public SchemaDiff() {
 
     }

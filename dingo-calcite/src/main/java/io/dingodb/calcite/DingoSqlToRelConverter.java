@@ -50,6 +50,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * dingo实现的SqlToRelConverter，负责把分析树sqlNode转换为查询树relNode。
+ */
 class DingoSqlToRelConverter extends SqlToRelConverter {
 
     static final Config CONFIG = SqlToRelConverter.CONFIG

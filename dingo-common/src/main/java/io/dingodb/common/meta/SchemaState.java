@@ -16,6 +16,9 @@
 
 package io.dingodb.common.meta;
 
+/**
+ * 定义schema状态值的枚举类型。
+ */
 public enum SchemaState {
     UNRECOGNIZED(-1),
     SCHEMA_NONE(0),
@@ -26,15 +29,32 @@ public enum SchemaState {
     SCHEMA_PUBLIC(5),
     SCHEMA_GLOBAL_TXN_ONLY(6);
 
+    /**
+     * 存储枚举值对应的数值。
+     */
     private final int code;
+
+    /**
+     * 构造函数。
+     * @param code
+     */
     SchemaState(int code) {
         this.code = code;
     }
 
+    /**
+     * 枚举值转整数。
+     * @return
+     */
     public int getCode() {
         return code;
     }
 
+    /**
+     * 整数转枚举值。
+     * @param number
+     * @return
+     */
     public static SchemaState get(int number) {
         switch (number) {
             case 0:

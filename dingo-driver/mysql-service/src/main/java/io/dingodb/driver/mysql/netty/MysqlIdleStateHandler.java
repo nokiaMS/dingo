@@ -30,9 +30,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * mysql空闲状态处理类。
+ */
 @Slf4j
 @ChannelHandler.Sharable
 public class MysqlIdleStateHandler extends ChannelDuplexHandler {
+    //最小超时时间，1秒。
     private static final long MIN_TIMEOUT_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
     // Not create a new ChannelFutureListener per write operation to reduce GC pressure.
@@ -45,24 +49,52 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
 
     private volatile long idleTimeNanos;
 
+    /**
+     * 检测间隔时间。
+     */
     private long interval;
 
+    /**
+     * 最后一次读时间。
+     */
     private long lastReadTime;
 
+    /**
+     * 记录最后一次写入时间。
+     */
     private long lastWriteTime;
 
     private final long delayTime;
 
     private ScheduledFuture<?> idleTimeoutFuture;
 
+    /**
+     * 空闲状态处理对象的状态。
+     */
     private byte state; // 0 - none, 1 - initialized, 2 - destroyed
+
+    /**
+     * 通道是否处于正在读状态。
+     */
     private boolean reading;
 
+    /**
+     * 定时调度器。
+     */
     ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 
+    /**
+     * 定时任务执行的命令。
+     */
     private Runnable command;
 
+    /**
+     * 构造函数。
+     * @param allIdleTime
+     * @param interval  检测间隔时间。
+     */
     public MysqlIdleStateHandler(long allIdleTime, long interval) {
+        //设置时间单位为秒。
         TimeUnit unit = TimeUnit.SECONDS;
         delayTime = unit.toNanos(5);
         if (allIdleTime <= 0) {
@@ -100,6 +132,11 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
         return TimeUnit.NANOSECONDS.toSeconds(idleTimeNanos);
     }
 
+    /**
+     * 当此句柄被加入channel时执行。
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         if (ctx.channel().isActive() && ctx.channel().isRegistered()) {
@@ -107,11 +144,20 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
         }
     }
 
+    /**
+     * 当此句柄从通道中移除时执行。
+     * @param ctx
+     */
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
         destroy();
     }
 
+    /**
+     * 当注册此句柄时执行此函数。
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         // Initialize early if channel is active already.
@@ -121,6 +167,11 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
         super.channelRegistered(ctx);
     }
 
+    /**
+     * 通道变为活跃时执行此函数。
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // This method will be invoked only if this handler was added
@@ -130,26 +181,54 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
         super.channelActive(ctx);
     }
 
+    /**
+     * 通道断开连接时执行此函数。
+     * @param ctx
+     * @param promise
+     * @throws Exception
+     */
     @Override
     public void disconnect(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         super.disconnect(ctx, promise);
     }
 
+    /**
+     * 通道关闭时执行此函数。
+     * @param ctx
+     * @param promise
+     * @throws Exception
+     */
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         super.close(ctx, promise);
     }
 
+    /**
+     * 通道解除注册时执行此函数。
+     * @param ctx
+     * @param promise
+     * @throws Exception
+     */
     @Override
     public void deregister(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         super.deregister(ctx, promise);
     }
 
+    /**
+     * 通道未注册时执行此函数。
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         super.channelUnregistered(ctx);
     }
 
+    /**
+     * 通道变为不活跃时执行此函数。
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         destroy();
@@ -157,14 +236,27 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
         ctx.close();
     }
 
+    /**
+     * channel读取函数。
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (idleTimeNanos > 0) {
+            //设置channel正在读取。
             reading = true;
         }
+        //读取消息。
         ctx.fireChannelRead(msg);
     }
 
+    /**
+     * channel读取完毕。
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         if ((idleTimeNanos > 0) && reading) {
@@ -174,6 +266,13 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
         ctx.fireChannelReadComplete();
     }
 
+    /**
+     * 向通道写入消息。
+     * @param ctx
+     * @param msg
+     * @param promise
+     * @throws Exception
+     */
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         // Allow writing with void promise if handler is only configured for read timeout events.
@@ -184,6 +283,10 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
         }
     }
 
+    /**
+     * 初始化。
+     * @param ctx
+     */
     private void initialize(ChannelHandlerContext ctx) {
         // Avoid the case where destroy() is called before scheduling timeouts.
         // See: https://github.com/netty/netty/issues/143
@@ -197,6 +300,7 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
 
         state = 1;
 
+        //设置最后一次读时间与写时间为当前时间。
         lastReadTime = lastWriteTime = ticksInNanos();
         if (idleTimeNanos > 0) {
             command = new MysqlIdleStateHandler.IdleTimeoutTask(ctx);
@@ -207,16 +311,27 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
     }
 
     /**
+     * 返回当前纳秒时间。
      * This method is visible for testing!.
      */
     long ticksInNanos() {
         return System.nanoTime();
     }
 
+    /**
+     * 定时任务调度函数。
+     * @param task
+     * @param delay
+     * @param unit
+     * @return
+     */
     ScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
         return service.scheduleAtFixedRate(task, delayTime, delay, unit);
     }
 
+    /**
+     * 销毁定时任务。
+     */
     private void destroy() {
         state = 2;
 
@@ -230,14 +345,27 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
         command = null;
     }
 
+    /**
+     * 抽象空闲任务。
+     */
     private abstract static class AbstractIdleTask implements Runnable {
 
+        /**
+         * channel上下文。
+         */
         private final ChannelHandlerContext ctx;
 
+        /**
+         * 构造函数。
+         * @param ctx
+         */
         AbstractIdleTask(ChannelHandlerContext ctx) {
             this.ctx = ctx;
         }
 
+        /**
+         * 任务运行函数。
+         */
         @Override
         public void run() {
             if (!ctx.channel().isOpen()) {
@@ -247,15 +375,30 @@ public class MysqlIdleStateHandler extends ChannelDuplexHandler {
             run(ctx);
         }
 
+        /**
+         * 任务运行函数。
+         * @param ctx
+         */
         protected abstract void run(ChannelHandlerContext ctx);
     }
 
+    /**
+     * 创建空闲超时定时处理任务。
+     */
     private final class IdleTimeoutTask extends MysqlIdleStateHandler.AbstractIdleTask {
 
+        /**
+         * 构造函数。
+         * @param ctx
+         */
         IdleTimeoutTask(ChannelHandlerContext ctx) {
             super(ctx);
         }
 
+        /**
+         * task运行函数。
+         * @param ctx
+         */
         @Override
         protected void run(ChannelHandlerContext ctx) {
 

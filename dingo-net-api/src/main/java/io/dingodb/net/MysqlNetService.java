@@ -16,8 +16,16 @@
 
 package io.dingodb.net;
 
+/**
+ * mysql网络服务接口定义。
+ */
 public interface MysqlNetService {
 
+    /**
+     * 监听mysql服务端端口。
+     * @param port
+     * @throws Exception
+     */
     void listenPort(int port) throws Exception;
 
 }

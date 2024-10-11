@@ -98,15 +98,23 @@ public final class MysqlResponseHandler {
             & ExtendedClientCapabilities.CLIENT_DEPRECATE_EOF) != 0;
         String connCharSet = null;
         try {
+            //获得客户端字符集。
             connCharSet = mysqlConnection.getConnection().getClientInfo(CONNECTION_CHARSET);
             ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer();
+
+            //获得结果集元信息。
             ResultSetMetaData metaData = resultSet.getMetaData();
+
             ColumnsNumberPacket columnsNumberPacket = new ColumnsNumberPacket();
             columnsNumberPacket.packetId = (byte) packetId.getAndIncrement();
+
+            //从结果集元信息中获得列的个数。
             int columnCount = metaData.getColumnCount();
+
             columnsNumberPacket.columnsNumber = columnCount;
             columnsNumberPacket.write(buffer);
 
+            //构造列元信息包。
             List<ColumnPacket> columns = factory.getColumnPackets(packetId, resultSet, false);
             for (ColumnPacket columnPacket : columns) {
                 columnPacket.write(buffer);

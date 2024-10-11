@@ -18,10 +18,14 @@ package io.dingodb.common.ddl;
 
 import java.util.EventObject;
 
+/**
+ * ddl job事件。
+ */
 public class DdlJobEvent extends EventObject {
     private static final long serialVersionUID = 4377501142382280040L;
 
     /**
+     * 构造函数。
      * Constructs a prototypical Event.
      *
      * @param source The object on which the Event initially occurred.

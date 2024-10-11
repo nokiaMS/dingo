@@ -21,6 +21,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * variable段配置。
+ */
 @Getter
 @Setter
 @ToString
@@ -31,6 +34,10 @@ public class VariableConfiguration {
     private Integer autoIncrementOffset;
     private Boolean enableTableLock;
 
+    /**
+     * 返回是否允许表锁。
+     * @return
+     */
     public boolean getEnableTableLock() {
         if (enableTableLock == null) {
             return true;

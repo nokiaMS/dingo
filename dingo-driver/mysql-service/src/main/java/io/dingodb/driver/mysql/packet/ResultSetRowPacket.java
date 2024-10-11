@@ -26,6 +26,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * mysql结果集row packet。
+ */
 public class ResultSetRowPacket extends MysqlPacket {
 
     @Setter
