@@ -70,8 +70,16 @@ public class MysqlNettyServer {
         }
     }
 
+    /**
+     * channel初始化函数。
+     * @return
+     */
     private ChannelInitializer<SocketChannel> channelInitializer() {
         return new ChannelInitializer<SocketChannel>() {
+            /**
+             * channel初始化函数。
+             * @param ch
+             */
             @Override
             protected void initChannel(SocketChannel ch) {
                 MysqlConnection mysqlConnection = new MysqlConnection(ch);

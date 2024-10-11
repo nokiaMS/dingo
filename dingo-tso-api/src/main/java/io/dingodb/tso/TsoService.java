@@ -16,6 +16,9 @@
 
 package io.dingodb.tso;
 
+/**
+ * TsoService接口定义了一个tso服务需要具备的接口。
+ */
 public interface TsoService {
 
     static TsoService getDefault() {

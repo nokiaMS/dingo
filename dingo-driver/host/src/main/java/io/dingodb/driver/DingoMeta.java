@@ -305,8 +305,12 @@ public class DingoMeta extends MetaImpl {
         try {
             statement = (DingoStatement) dingoConnection.getStatement(sh);
             statement.initSqlProfile();
+
+            //创建DingoDriverParser对象，其内部关联了dingoConnection对象。
             DingoDriverParser parser = new DingoDriverParser(dingoConnection);
             statement.removeJob(jobManager);
+
+            //进行sql解析。
             Signature signature = parser.parseQuery(jobManager, jobSeqId, sql, false);
             sql = signature.sql;
             // add profile

@@ -81,24 +81,39 @@ public class MysqlCommands {
         }
     }
 
+    /**
+     * 执行客户端传递过来的sql命令。
+     * @param queryPacket   mysql命令包。
+     * @param mysqlConnection   连接对象。
+     */
     public void execute(QueryPacket queryPacket,
                         MysqlConnection mysqlConnection) {
         String sql;
         String characterSet = null;
+
+        //1. 获得转码后的sql字符串。
         try {
+            //获得客户端字符集。
             characterSet = mysqlConnection.getConnection().getClientInfo(CONNECTION_CHARSET);
+            //把客户端字符集名称转换为server支持的字符集名称。
             characterSet = getCharacterSet(characterSet);
+            //把客户端传递过来的sql命令字符串进行转码（客户端字符串->字节码->服务端字符串）
             sql = new String(queryPacket.message, characterSet);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        //packetId自增，此id用于返回消息。
         AtomicLong packetId = new AtomicLong(queryPacket.packetId + 1);
+
         LogUtils.debug(log, "dingo connection:{}, receive sql:{}", mysqlConnection.getConnection().toString(), sql);
         if (mysqlConnection.passwordExpire && !doExpire(mysqlConnection, sql, packetId)) {
             MysqlResponseHandler.responseError(packetId, mysqlConnection.channel, ErrorCode.ER_PASSWORD_EXPIRE,
                 characterSet);
             return;
         }
+
+        //执行sql命令。
         executeSingleQuery(sql, packetId, mysqlConnection);
     }
 
@@ -188,6 +203,12 @@ public class MysqlCommands {
         }
     }
 
+    /**
+     * 执行sql命令。
+     * @param sql   sql语句字符串。
+     * @param packetId      packet id作为响应消息的包id。
+     * @param mysqlConnection   连接对象。
+     */
     public void executeSingleQuery(String sql, AtomicLong packetId,
                                    MysqlConnection mysqlConnection) {
         Statement statement = null;
@@ -195,7 +216,9 @@ public class MysqlCommands {
         String connCharSet = null;
 
         try {
+            //创建Statement对象。
             statement = mysqlConnection.getConnection().createStatement();
+            //获得连接字符集。
             connCharSet = mysqlConnection.getConnection().getClientInfo(CONNECTION_CHARSET);
             hasResults = statement.execute(sql);
             if (hasResults) {

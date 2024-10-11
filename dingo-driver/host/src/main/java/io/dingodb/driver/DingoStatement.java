@@ -41,6 +41,9 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.Iterator;
 
+/**
+ * 继承了AvaticaStatement。
+ */
 @Slf4j
 public class DingoStatement extends AvaticaStatement {
 
@@ -98,6 +101,11 @@ public class DingoStatement extends AvaticaStatement {
         super.setSignature(signature);
     }
 
+    /**
+     * 覆盖了基类的AvaticaStatement executeInternal函数，因此执行的时候调用到了dingo的实现。
+     * @param sql
+     * @throws SQLException
+     */
     @Override
     protected void executeInternal(String sql) throws SQLException {
         this.updateCount = -1;

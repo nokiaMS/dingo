@@ -81,10 +81,18 @@ public class DingoConfiguration {
         return INSTANCE;
     }
 
+    /**
+     * 获得服务的host信息，通常是一个ip地址。
+     * @return  返回配置文件中的host配置信息，是一个ip地址字符串。
+     */
     public static String host() {
         return Optional.mapOrNull(INSTANCE.exchange, ExchangeConfiguration::getHost);
     }
 
+    /**
+     * 获得配置中的port信息。
+     * @return  返回port值。
+     */
     public static int port() {
         return Optional.mapOrGet(INSTANCE.exchange, ExchangeConfiguration::getPort, () -> 0);
     }
@@ -105,7 +113,12 @@ public class DingoConfiguration {
         return INSTANCE.serverId;
     }
 
+    /**
+     * 读取配置中的host和port字段，生成localion，表示一个"位置"。
+     * @return  返回Location对象。
+     */
     public static @NonNull Location location() {
+        //构造Location对象并返回。
         return new Location(host(), port());
     }
 

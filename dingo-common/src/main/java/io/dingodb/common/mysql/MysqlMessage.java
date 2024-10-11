@@ -25,17 +25,37 @@ import java.util.Calendar;
 
 /**
  * MySQLMessage provides mysql byte operation.
+ * mysql消息格式。
  *
  * @author
  */
 public class MysqlMessage {
     public static final long NULL_LENGTH = -1;
+
+    /**
+     * 空字节流，当消息已经读取完毕，没有更多字节的时候返回此消息。
+     */
     private static final byte[] EMPTY_BYTES = new byte[0];
 
+    /**
+     * 最原始的消息字节流。
+     */
     private final byte[] data;
+
+    /**
+     * 消息总长度。
+     */
     private final int length;
+
+    /**
+     * 消息当前的待读取位置。
+     */
     private int position;
 
+    /**
+     * 构造函数。
+     * @param data
+     */
     public MysqlMessage(byte[] data) {
         this.data = data;
         this.length = data.length;
@@ -70,7 +90,12 @@ public class MysqlMessage {
         return data[index];
     }
 
+    /**
+     * 从消息中读取一个字节并返回。
+     * @return
+     */
     public byte read() {
+        //从buffer中返回一个字节。
         return data[position++];
     }
 
@@ -144,13 +169,23 @@ public class MysqlMessage {
         }
     }
 
+    /**
+     * 返回消息中剩余的所有未读部分。
+     * @return  消息中所以未读部分。
+     */
     public byte[] readBytes() {
+        //如果已经读取完毕，那么返回空字节数组。
         if (position >= length) {
             return EMPTY_BYTES;
         }
+
+        //获得剩余消息字节流。
         byte[] ab = new byte[length - position];
         System.arraycopy(data, position, ab, 0, ab.length);
+        //更新当前读取到的消息为止。
         position = length;
+
+        //返回字节流数组。
         return ab;
     }
 
