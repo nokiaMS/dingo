@@ -176,13 +176,19 @@ public class DingoMeta extends MetaImpl {
             .collect(Collectors.toSet());
     }
 
+    /**
+     * 获得匹配的table列表。
+     * @param schemas   表所在的schema。
+     * @param pat       匹配模式。
+     * @return  匹配的table列表。
+     */
     private Collection<CalciteSchema.TableEntry> getMatchedTables(
         @NonNull Collection<CalciteSchema> schemas,
         @NonNull Pat pat
     ) {
         final Predicate<String> filter = patToFilter(pat, true);
-        return schemas.stream()
-            .map(schema -> (SubCalciteSchema)schema)
+        return schemas.stream()     //把schema集合转换为流的形式。
+            .map(schema -> (SubCalciteSchema)schema)    //对schema做类型转换。
             .flatMap(s -> s.getTableNames().stream()
                 .filter(filter)
                 .filter(name -> verifyPrivilege((SubSnapshotSchema) s.schema, name, "getTables"))
@@ -305,8 +311,12 @@ public class DingoMeta extends MetaImpl {
         try {
             statement = (DingoStatement) dingoConnection.getStatement(sh);
             statement.initSqlProfile();
+
+            //创建DingoDriverParser对象，其内部关联了dingoConnection对象。
             DingoDriverParser parser = new DingoDriverParser(dingoConnection);
             statement.removeJob(jobManager);
+
+            //进行sql解析。
             Signature signature = parser.parseQuery(jobManager, jobSeqId, sql, false);
             sql = signature.sql;
             // add profile
@@ -1062,6 +1072,15 @@ public class DingoMeta extends MetaImpl {
         }
     }
 
+    /**
+     * 获得数据库tables元信息。(特定schema下的table列表。)
+     * @param ch
+     * @param catalog
+     * @param schemaPattern
+     * @param tableNamePattern
+     * @param typeList
+     * @return
+     */
     @Override
     public MetaResultSet getTables(
         ConnectionHandle ch,

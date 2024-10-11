@@ -21,17 +21,31 @@ import io.dingodb.transaction.api.TransactionService;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * rollback命令实现类。
+ */
 public class RollbackTxOperation implements DdlOperation {
 
+    /**
+     * 当前连接对象。
+     */
     private Connection connection;
 
+    /**
+     * 构造函数。
+     * @param connection
+     */
     public RollbackTxOperation(Connection connection) {
         this.connection = connection;
     }
 
+    /**
+     * 覆盖函数接口。
+     */
     @Override
     public void execute() {
         try {
+            //获得默认的事务服务并调用rollback接口。
             TransactionService.getDefault().rollback(connection);
         } catch (SQLException e) {
             throw new RuntimeException(e);

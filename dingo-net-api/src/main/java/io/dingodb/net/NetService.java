@@ -21,6 +21,9 @@ import io.dingodb.net.api.ApiRegistry;
 
 import java.util.Map;
 
+/**
+ * 网络服务对象接口类。
+ */
 public interface NetService extends AutoCloseable {
 
     /**
@@ -117,6 +120,8 @@ public interface NetService extends AutoCloseable {
     void cancelPort(String host, int port) throws Exception;
 
     /**
+     * 返回一个api注册器实例。
+     *
      * Returns api registry instance, {@link ApiRegistry}.
      *
      * @return api registry instance

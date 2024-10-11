@@ -257,6 +257,14 @@ public final class DingoDriverParser extends DingoParser {
         return parameters;
     }
 
+    /**
+     * 解析sql语句并返回执行结果。
+     * @param jobManager
+     * @param jobSeqId
+     * @param sql   客户端发送过来的sql语句字符串。
+     * @param prepare
+     * @return
+     */
     @Nonnull
     public Meta.Signature parseQuery(
         JobManager jobManager,
@@ -266,7 +274,8 @@ public final class DingoDriverParser extends DingoParser {
     ) {
         SqlNode sqlNode;
         try {
-            long start = System.currentTimeMillis();
+            long start = System.currentTimeMillis();    //获得系统当前时间戳。
+            //1. sql字符串转换为解析树sqlNode。
             sqlNode = parse(sql);
             long sub = System.currentTimeMillis() - start;
             DingoMetrics.timer("sql-parse").update(sub, TimeUnit.MILLISECONDS);
@@ -289,7 +298,7 @@ public final class DingoDriverParser extends DingoParser {
             return mysqlSignature;
         }
 
-        if (sqlNode.getKind().belongsTo(SqlKind.DDL)) {
+        if (sqlNode.getKind().belongsTo(SqlKind.DDL)) {     //drop table命令属于SqlKind.DDL。
             planProfile.end();
             DingoDdlVerify.verify(sqlNode, connection);
             execProfile = new ExecProfile("DDL");
@@ -365,6 +374,8 @@ public final class DingoDriverParser extends DingoParser {
         startTs = transaction.getStartTs();
         Meta.StatementType statementType;
         RelDataType type;
+
+        //2. 对解析树进行有效性验证，也就是pg中的语义分析。
         SqlValidator validator = getSqlValidator();
         try {
             sqlNode = validator.validate(sqlNode);
@@ -455,7 +466,10 @@ public final class DingoDriverParser extends DingoParser {
         }
 
         long start = System.currentTimeMillis();
+
+        //3. 把分析树转换为查询树。
         final RelRoot relRoot = convert(sqlNode, false);
+        //4. 对查询树进行逻辑优化与物理优化。
         RelNode relNode = optimize(relRoot.rel);
         long sub = System.currentTimeMillis() - start;
         DingoMetrics.timer("relOptimize").update(sub, TimeUnit.MILLISECONDS);
