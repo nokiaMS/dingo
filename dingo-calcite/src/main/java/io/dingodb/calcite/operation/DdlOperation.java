@@ -18,11 +18,23 @@ package io.dingodb.calcite.operation;
 
 import io.dingodb.common.profile.Profile;
 
+/**
+ * ddl操作接口。
+ * ddl操作通常不需要返回结果集，如果需要返回结果集那么可以继承QueryOperation.
+ */
 public interface DdlOperation extends Operation {
+    /**
+     * ddl操作需要实现doExecute接口。
+     * 如果没有实现的话那么采用默认实现，因此，继承类只需要实现execute()接口即可。
+     * @param profile
+     */
     default void doExecute(Profile profile) {
         execute();
         profile.end();
     }
 
+    /**
+     * sql命令的执行函数，继承类必须实现此接口。
+     */
     void execute();
 }

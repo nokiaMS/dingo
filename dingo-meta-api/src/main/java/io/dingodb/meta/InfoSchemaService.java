@@ -53,6 +53,10 @@ public interface InfoSchemaService {
 
     String mSchemaVerTemplate = "%s:%s";
 
+    /**
+     * 存储在coordinator中，全局schema版本号。
+     * 作为后续操作的key使用。
+     */
     String globalSchemaVer = String.format(mSchemaVerTemplate, DdlUtil.tenantPrefix, DdlUtil.DDLGlobalSchemaVersion);
     String expSchemaVer = String.format(mSchemaVerTemplate, DdlUtil.tenantPrefix, DdlUtil.DDLExpSchemaVersion);
 

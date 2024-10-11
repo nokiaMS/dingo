@@ -36,6 +36,9 @@ import java.util.Map;
 
 import static io.dingodb.common.ddl.DdlUtil.tenantPrefix;
 
+/**
+ * schema同步服务实现。
+ */
 @Slf4j
 public class SchemaSyncerService implements io.dingodb.meta.SchemaSyncerService {
 
@@ -44,16 +47,26 @@ public class SchemaSyncerService implements io.dingodb.meta.SchemaSyncerService 
 
     LockService lockService = new LockService(resource, Configuration.coordinators(), 180);
 
+    /**
+     * 默认的schema同步服务实例。
+     */
     public static final SchemaSyncerService ROOT = new SchemaSyncerService();
 
     @AutoService(SchemaSyncerServiceProvider.class)
     public static class Provider implements SchemaSyncerServiceProvider {
+        /**
+         * 返回默认的schema同步服务实例。
+         * @return
+         */
         @Override
         public io.dingodb.meta.SchemaSyncerService root() {
             return ROOT;
         }
     }
 
+    /**
+     * 默认构造函数。
+     */
     private SchemaSyncerService() {
     }
 
@@ -86,6 +99,13 @@ public class SchemaSyncerService implements io.dingodb.meta.SchemaSyncerService 
         }
     }
 
+    /**
+     * owner检测所有节点都同步到了最新的版本。如果没有则循环等待，直到所有节点都同步到了最新的版本。
+     * @param jobId
+     * @param latestVer     最新版本号，也就是所有节点需要同步到的版本号。
+     * @param reorg
+     * @return
+     */
     @Override
     public String ownerCheckAllVersions(long jobId, long latestVer, boolean reorg) {
         int notMatchVerCnt = 0;
@@ -178,6 +198,10 @@ public class SchemaSyncerService implements io.dingodb.meta.SchemaSyncerService 
         }
     }
 
+    /**
+     * owner更新全局schema版本号globalSchemaVer(此更新调用了coordinator的rpc，最终更新了coordinator上的全局版本号状态。)
+     * @param version   版本号。
+     */
     @Override
     public synchronized void ownerUpdateGlobalVersion(long version) {
         InfoSchemaService infoSchemaService = InfoSchemaService.ROOT;

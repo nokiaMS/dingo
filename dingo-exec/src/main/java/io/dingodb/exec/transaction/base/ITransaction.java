@@ -30,20 +30,47 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
+/**
+ * 事务接口。
+ */
 public interface ITransaction {
 
+    /**
+     * 获得事务的启动时间戳。
+     * @return
+     */
     long getStartTs();
 
+    /**
+     * 获得事务的提交时间戳。
+     * @return
+     */
     long getCommitTs();
 
+    /**
+     * 获得事务id。
+     * @return
+     */
     CommonId getTxnId();
 
     CommonId getTxnInstanceId();
 
+    /**
+     * 获得事务的隔离级别。
+     * @return
+     */
     int getIsolationLevel();
 
+    /**
+     * 获得事务类型。
+     * @return
+     */
     TransactionType getType();
 
+    /**
+     * 获得事务状态。
+     * @return
+     */
     TransactionStatus getStatus();
 
     TransactionCache getCache();
@@ -54,6 +81,10 @@ public interface ITransaction {
 
     boolean commitPrimaryKey(CacheToObject cacheToObject);
 
+    /**
+     * 获得主键。
+     * @return
+     */
     byte[] getPrimaryKey();
 
     void commit(JobManager jobManager);

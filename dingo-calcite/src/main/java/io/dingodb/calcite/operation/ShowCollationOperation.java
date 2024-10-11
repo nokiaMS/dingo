@@ -20,21 +20,47 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * show collation 命令实现函数。
+ *
+ * mysql> show collation;
+ * +-----------+---------+------+---------+----------+---------+
+ * | Collation | Charset | Id   | Default | Compiled | Sortlen |
+ * +-----------+---------+------+---------+----------+---------+
+ * | utf8_bin  | utf8    | 83   |         | Yes      | 1       |
+ * +-----------+---------+------+---------+----------+---------+
+ * 1 row in set (0.01 sec)
+ *
+ * mysql>
+ */
 public class ShowCollationOperation extends QueryOperation {
 
     private String sqlLikePattern;
 
+    /**
+     * 构造函数。
+     * @param sqlLikePattern
+     */
     public ShowCollationOperation(String sqlLikePattern) {
         this.sqlLikePattern = sqlLikePattern;
     }
 
+    /**
+     * 结果集迭代器。
+     * @return
+     */
     @Override
     public Iterator<Object[]> getIterator() {
         List<Object[]> tupleList = new ArrayList<>();
+        //构造结果集。
         tupleList.add(new Object[] {"utf8_bin", "utf8", 83, "", "Yes", 1});
         return tupleList.iterator();
     }
 
+    /**
+     * 结果集元信息。
+     * @return
+     */
     @Override
     public List<String> columns() {
         List<String> columns = new ArrayList<>();

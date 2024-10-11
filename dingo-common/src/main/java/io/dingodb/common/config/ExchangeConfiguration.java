@@ -22,11 +22,21 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * 配置文件中exchange段结构体。
+ */
 @Getter
 @Setter
 @ToString
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ExchangeConfiguration {
+    /**
+     * 主机地址。
+     */
     private String host;
+
+    /**
+     * 端口号。
+     */
     private Integer port;
 }

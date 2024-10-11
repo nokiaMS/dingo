@@ -43,19 +43,40 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static io.dingodb.calcite.operation.SetOptionOperation.CONNECTION_CHARSET;
 
+/**
+ * mysql命令处理对象。
+ */
 @Slf4j
 public final class MessageProcess {
 
+    /**
+     * 构造mysql命令处理对象。
+     */
     public static final MysqlCommands commands = new MysqlCommands();
 
+    /**
+     * 默认构造函数。
+     */
     private MessageProcess() {
     }
 
+    /**
+     * mysql消息处理函数。
+     * @param msg   消息内容。
+     * @param mysqlConnection   连接对象。
+     */
     public static void process(ByteBuf msg, MysqlConnection mysqlConnection) {
+        //获得消息长度。
         int length = msg.readableBytes();
+        //创建一个新的字节数组以接收消息。
         byte[] array = new byte[length];
+        //从消息流中读取消息并填充到之前分配的字节数组中。
         msg.getBytes(msg.readerIndex(), array);
+
+        //获得mysql消息类型标志位。
         byte flg = array[1];
+
+        //获得消息id。
         byte packetIdByte = array[0];
         AtomicLong packetId = new AtomicLong(packetIdByte);
         packetId.incrementAndGet();
@@ -71,6 +92,8 @@ public final class MessageProcess {
             MysqlResponseHandler.responseError(packetId, mysqlConnection.channel, ErrorCode.ER_PASSWORD_EXPIRE, connCharSet);
             return;
         }
+
+        //按照消息类型处理消息。
         switch (flg) {
             case NativeConstants.COM_QUIT:
                 // quit
@@ -107,12 +130,14 @@ public final class MessageProcess {
                         ErrorCode.ER_NO_DATABASE_ERROR, connCharSet);
                 }
                 break;
-            case NativeConstants.COM_QUERY:
+            case NativeConstants.COM_QUERY:     //一般的crud操作都走此消息。
                 QueryPacket queryPacket = new QueryPacket();
+                //从字节数组中读取消息并转换为queryPacket结构。
                 queryPacket.read(array);
                 queryPacket.extendClientFlg = mysqlConnection.authPacket.extendClientFlags;
                 queryPacket.clientFlg = mysqlConnection.authPacket.clientFlags;
 
+                //执行客户端传递过来的sql语句。
                 commands.execute(queryPacket, mysqlConnection);
                 break;
             case NativeConstants.COM_FIELD_LIST:

@@ -44,6 +44,9 @@ public class MysqlConnection {
 
     public SocketChannel channel;
 
+    /**
+     * 实际存储的是DingoConnection类。
+     */
     @Getter
     private Connection connection;
 

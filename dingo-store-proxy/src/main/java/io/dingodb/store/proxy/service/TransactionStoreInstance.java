@@ -103,7 +103,12 @@ public class TransactionStoreInstance {
 
     private final StoreService storeService;
     private final IndexService indexService;
+
+    /**
+     * 分区id。
+     */
     private final CommonId partitionId;
+
     private final DocumentService documentService;
 
     private final static int VectorKeyLen = 17;
@@ -153,12 +158,27 @@ public class TransactionStoreInstance {
         }
     }
 
+    /**
+     * 预写主键请求。
+     * @param txnPreWrite   请求内容。
+     * @param timeOut       请求超时时间。
+     * @return
+     */
     public boolean txnPreWrite(TxnPreWrite txnPreWrite, long timeOut) {
+        //更新mutation的key以满足于store之间的接口需求。
         txnPreWrite.getMutations().stream().peek($ -> $.setKey(setId($.getKey()))).forEach($ -> $.getKey()[0] = 't');
+        //发送事务给store。
         return txnPreWriteRealKey(txnPreWrite, timeOut);
     }
 
+    /**
+     * 发送key修改之后的预写请求给store。
+     * @param txnPreWrite
+     * @param timeOut
+     * @return
+     */
     public boolean txnPreWriteRealKey(TxnPreWrite txnPreWrite, long timeOut) {
+        //获得当前时间。
         long start = System.currentTimeMillis();
         try {
             int n = 1;

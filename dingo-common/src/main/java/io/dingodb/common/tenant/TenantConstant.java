@@ -16,10 +16,20 @@
 
 package io.dingodb.common.tenant;
 
+/**
+ * 设置租户id TENANT_ID 常量值。
+ */
 public class TenantConstant {
 
+    /**
+     * 租户id值。
+     */
     public static long TENANT_ID;
 
+    /**
+     * 构造函数
+     * @param tenantId  租户id。
+     */
     public static void tenant(long tenantId) {
         TENANT_ID = tenantId;
     }

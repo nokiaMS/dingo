@@ -37,14 +37,44 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * show create table <tbl> 命令响应函数。
+ *
+ * 用例一：
+ * mysql> show create table gg1;
+ * +-------+--------------------------------------------------------------------------------------------------------------+
+ * | Table | Create Table                                                                                                 |
+ * +-------+--------------------------------------------------------------------------------------------------------------+
+ * | gg1   | CREATE TABLE `GG1`(
+ *     `A` INT NOT NULL,
+ *     `B` INT,
+ *     PRIMARY KEY (`A`)
+ * ) engine=TXN_LSM  replica=3 |
+ * +-------+--------------------------------------------------------------------------------------------------------------+
+ * 1 row in set (0.02 sec)
+ *
+ * mysql>
+ */
 public class ShowCreateTableOperation extends QueryOperation {
 
     @Setter
     public SqlNode sqlNode;
 
+    /**
+     * schema名称。
+     */
     private String schemaName;
+
+    /**
+     * 表名称。
+     */
     private String tableName;
 
+    /**
+     * 构造函数。
+     * @param sqlNode
+     * @param defaultSchemaName
+     */
     public ShowCreateTableOperation(SqlNode sqlNode, String defaultSchemaName) {
         SqlShowCreateTable showCreateTable = (SqlShowCreateTable) sqlNode;
         SqlIdentifier tableIdentifier = showCreateTable.tableIdentifier;
@@ -57,9 +87,14 @@ public class ShowCreateTableOperation extends QueryOperation {
         }
     }
 
+    /**
+     * 数据集迭代器。
+     * @return
+     */
     @Override
     public Iterator<Object[]> getIterator() {
         List<Object[]> createTableList = new ArrayList<>();
+        //获得创建表的命令。
         String createTable = getCreateTable();
         if (StringUtils.isNotBlank(createTable)) {
             Object[] tuples = new Object[]{tableName, createTable};
@@ -77,6 +112,10 @@ public class ShowCreateTableOperation extends QueryOperation {
         return columns;
     }
 
+    /**
+     * 获得创建表的命令。
+     * @return 返回表创建命令字符串。
+     */
     private String getCreateTable() {
         InfoSchema is = DdlService.root().getIsLatest();
         Table table = is.getTable(schemaName.toUpperCase(), tableName);

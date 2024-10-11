@@ -18,16 +18,22 @@ package io.dingodb.net;
 
 import java.util.ServiceLoader;
 
+/**
+ * 网络服务发现提供者。
+ */
 public interface NetServiceProvider {
 
     /**
+     * 返回默认的NetServiceProvider实例。
      * Get default net service provider impl.
+     * ServiceLoader是java中SPI的一种实现，即服务发现机制。
      */
     static NetServiceProvider getDefault() {
         return ServiceLoader.load(NetServiceProvider.class).iterator().next();
     }
 
     /**
+     * 此接口用于获得一个NetService实例。
      * Get net service instance.
      */
     NetService get();

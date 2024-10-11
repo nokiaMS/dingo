@@ -90,7 +90,12 @@ public class InfoSchemaService implements io.dingodb.meta.InfoSchemaService {
     private final TxStructure txn;
     private VersionService versionService;
     Set<Location> coordinators;
+
+    /**
+     * 保存当前租户的id信息。
+     */
     private static final long tenantId = TenantConstant.TENANT_ID;
+
     public static final InfoSchemaService ROOT = new InfoSchemaService();
 
     private final byte[] genSchemaVerKey = CodecKvUtil.encodeStringDataKey(schemaVerKey());
@@ -154,6 +159,12 @@ public class InfoSchemaService implements io.dingodb.meta.InfoSchemaService {
         return val != null;
     }
 
+    /**
+     * 检测database是否存在。
+     * @param tenantKey     租户id。
+     * @param schemaKey     schema id。
+     * @return
+     */
     @Override
     public boolean checkDBExists(byte[] tenantKey, byte[] schemaKey) {
         byte[] val = txn.hGet(tenantKey, schemaKey);
@@ -366,11 +377,24 @@ public class InfoSchemaService implements io.dingodb.meta.InfoSchemaService {
         return getSchemaInfos(tenantKey);
     }
 
+    /**
+     * 根据schema id与table id获得table对象。
+     * @param schemaId
+     * @param tableId
+     * @return
+     */
     @Override
     public Object getTable(long schemaId, long tableId) {
         return getTable(schemaId, tableId, tenantId);
     }
 
+    /**
+     * 根据schema id，表id与租户id获得table对象。
+     * @param schemaId
+     * @param tableId
+     * @param tenantId
+     * @return
+     */
     @Override
     public Object getTable(long schemaId, long tableId, long tenantId) {
         byte[] tenantKey = tenantKey(tenantId);
@@ -412,6 +436,12 @@ public class InfoSchemaService implements io.dingodb.meta.InfoSchemaService {
         return null;
     }
 
+    /**
+     * 根据schema id与table id获得table定义。
+     * @param schemaId
+     * @param tableId
+     * @return
+     */
     @Override
     public Table getTableDef(long schemaId, long tableId) {
         TableDefinitionWithId tableWithId = (TableDefinitionWithId) getTable(schemaId, tableId);
@@ -739,12 +769,24 @@ public class InfoSchemaService implements io.dingodb.meta.InfoSchemaService {
             .collect(Collectors.toConcurrentMap(t -> t.name, t -> t));
     }
 
+    /**
+     * k-v写入到coordinator中。
+     * @param key   key值。
+     * @param val   value值。
+     */
     @Override
     public void putKvToCoordinator(String key, String val) {
+        //构造put请求。
         PutRequest putRequest = putRequest(key, val);
+        //put请求发送给coordinator。
         putKvToCoordinator(putRequest, 3);
     }
 
+    /**
+     * 发送put请求到coordinator中。
+     * @param putRequest
+     * @param retry
+     */
     public void putKvToCoordinator(PutRequest putRequest, int retry) {
         try {
             versionService.kvPut(System.identityHashCode(putRequest), putRequest);
@@ -757,6 +799,11 @@ public class InfoSchemaService implements io.dingodb.meta.InfoSchemaService {
         }
     }
 
+    /**
+     * 从coordinator中删除kv。
+     * @param key       起始key值。
+     * @param keyEnd    结束key值。
+     */
     @Override
     public void delKvFromCoordinator(String key, String keyEnd) {
         DeleteRangeRequest deleteRequest = DeleteRangeRequest.builder().key(key.getBytes()).rangeEnd(keyEnd.getBytes()).build();
@@ -1001,6 +1048,12 @@ public class InfoSchemaService implements io.dingodb.meta.InfoSchemaService {
         return 0;
     }
 
+    /**
+     * 构造put请求，并把kv填充到key和value字段。
+     * @param resourceKey   key值。
+     * @param value         value值。
+     * @return  返回put请求。
+     */
     private static PutRequest putRequest(String resourceKey, String value) {
         return PutRequest.builder()
             .lease(0L)

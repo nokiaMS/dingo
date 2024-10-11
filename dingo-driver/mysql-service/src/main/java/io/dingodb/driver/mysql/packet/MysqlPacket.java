@@ -26,6 +26,9 @@ public abstract class MysqlPacket {
 
     public int packetLength;
 
+    /**
+     * 消息类型。
+     */
     public byte packetId;
 
     public abstract int calcPacketSize();

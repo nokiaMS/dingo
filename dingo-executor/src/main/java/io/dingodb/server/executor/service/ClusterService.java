@@ -47,6 +47,9 @@ import java.util.stream.Collectors;
 
 public final class ClusterService implements io.dingodb.cluster.ClusterService {
 
+    /**
+     * 集群服务的默认实例。
+     */
     public static final ClusterService DEFAULT_INSTANCE = new ClusterService();
 
     @AutoService(ClusterServiceProvider.class)
@@ -109,6 +112,11 @@ public final class ClusterService implements io.dingodb.cluster.ClusterService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * 获得服务id。
+     * @param location  服务的位置信息，host + port。
+     * @return  返回服务id。
+     */
     @Override
     public CommonId getServerId(Location location) {
         return Optional.ofNullable(coordinatorService.getExecutorMap(

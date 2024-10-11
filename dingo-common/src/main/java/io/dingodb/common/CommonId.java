@@ -78,7 +78,7 @@ public class CommonId implements Comparable<CommonId>, Serializable {
         TXN_CACHE_CHECK_DATA(15),
 
         OP(20),
-        TRANSACTION(60),
+        TRANSACTION(60),        //事务id类型。
         TXN_INSTANCE(61),
         JOB(62),
         TASK(63),
@@ -133,13 +133,35 @@ public class CommonId implements Comparable<CommonId>, Serializable {
         }
     }
 
+    /**
+     * id类型。
+     */
     public final CommonType type;
+
+    /**
+     * id的domain。
+     */
     public final long domain;
+
+    /**
+     * id序列号。
+     */
     public final long seq;
 
     private transient volatile byte[] content;
+
+    /**
+     * common id的字符串形式。
+     */
     private transient String str;
 
+    /**
+     * 公共id对象：
+     *      一个id由三部分组成：类型+domain+序列号。
+     * @param type  id类型。
+     * @param domain    id所属域。
+     * @param seq   id的序列号。
+     */
     public CommonId(CommonType type, long domain, long seq) {
         this.type = type;
         this.domain = domain;

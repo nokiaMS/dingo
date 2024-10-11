@@ -24,6 +24,9 @@ import lombok.ToString;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 
+/**
+ * Location类表示一个服务的“位置”，这个位置由两部分组成：host + port。
+ */
 @ToString(of = {"host", "port"})
 public class Location implements Serializable {
     private static final long serialVersionUID = 4013504472715015258L;

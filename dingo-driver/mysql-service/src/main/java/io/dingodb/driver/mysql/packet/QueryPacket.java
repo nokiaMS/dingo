@@ -23,18 +23,37 @@ import io.netty.buffer.ByteBuf;
 
 import java.nio.ByteBuffer;
 
+/**
+ * 定义了一个query消息结构体。
+ */
 public class QueryPacket extends MysqlPacket {
+    /**
+     * 消息标识。
+     */
     public byte flag;
+
+    /**
+     * 消息内容，去掉了字符串的结尾\0.
+     */
     public byte[] message;
     public int extendClientFlg;
 
     public int clientFlg;
 
+    /**
+     * 从字节数组中读取数据构造消息结构体。
+     * @param data  消息字节流。
+     */
     public void read(byte[] data) {
+        //从消息的二进制形式构造mysql消息对象。
         MysqlMessage mm = new MysqlMessage(data);
         //packetLength = mm.readUB3();
+
+        //获取消息id。
         packetId = mm.read();
+        //获取消息标识。
         flag = mm.read();
+        //读取剩余部分，获取消息内容。如果消息以\0结尾，那么会去掉结尾\0.
         message = mm.readBytes();
         if (message[message.length - 1] == 0x00) {
             byte[] tmp = new byte[message.length - 1];

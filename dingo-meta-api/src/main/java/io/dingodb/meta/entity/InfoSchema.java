@@ -27,21 +27,40 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static io.dingodb.meta.ddl.InfoSchemaBuilder.bucketIdx;
 
+/**
+ * InfoSchema定义了一个db下所有的schema。
+ */
 @Slf4j
 @Data
 public class InfoSchema {
+    /**
+     * schema元信息版本号。
+     */
     public long schemaMetaVersion;
 
+    /**
+     * schema与其下的所有表的关联关系。
+     *      Map< schema名称,schema下的所有表 >
+     */
     public Map<String, SchemaTables> schemaMap;
 
     public Map<Integer, List<TableInfoCache>> sortedTablesBuckets;
 
+    /**
+     * 构造函数。
+     */
     public InfoSchema() {
         schemaMetaVersion = 0;
-        this.schemaMap = new ConcurrentHashMap<>();
+        this.schemaMap = new ConcurrentHashMap<>(); //ConcurrentHashMap是线程安全，支持高效并发的版本map。
         this.sortedTablesBuckets = new ConcurrentHashMap<>();
     }
 
+    /**
+     * 给定schema名称与表名称，返回对应的table对象。
+     * @param schemaName    schema名称。
+     * @param tableName     table名称。
+     * @return  table对象。
+     */
     public Table getTable(String schemaName, String tableName) {
         tableName = tableName.toUpperCase();
         if (schemaMap.containsKey(schemaName)) {
@@ -53,6 +72,12 @@ public class InfoSchema {
         return null;
     }
 
+    /**
+     * 从 schemaName 这个schema下删除一个表 tableName。
+     * @param schemaName    schema名称。
+     * @param tableName     table名称。
+     * @return      删除成功：true；删除失败：false。
+     */
     public boolean dropTable(String schemaName, String tableName) {
         schemaName = schemaName.toUpperCase();
         tableName = tableName.toUpperCase();
@@ -63,6 +88,13 @@ public class InfoSchema {
         return false;
     }
 
+    /**
+     * 添加一个表到指定schema中。
+     * @param schemaName    schema名称。
+     * @param tableName     表名称。
+     * @param table         表对象。
+     * @return
+     */
     public boolean putTable(String schemaName, String tableName, Table table) {
         if (getSchemaMap().containsKey(schemaName)) {
             SchemaTables schemaTables = schemaMap.get(schemaName);

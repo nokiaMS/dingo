@@ -16,11 +16,20 @@
 
 package io.dingodb.driver.mysql.netty;
 
-
+/**
+ * mysql兼容的sql网络服务。
+ */
 public class MysqlNetService implements io.dingodb.net.MysqlNetService {
+    /**
+     * 启动netty服务，兼容mysql端口。
+     * @param port  mysql端口。
+     * @throws Exception
+     */
     @Override
     public void listenPort(int port) throws Exception {
+        //创建MysqlNettyServer对象。
         MysqlNettyServer server = MysqlNettyServer.builder().port(port).build();
+        //启动mysql端口的网络服务，监听端口，接收消息并处理。
         server.start();
     }
 }

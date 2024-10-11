@@ -82,6 +82,12 @@ public class DdlWorker {
         this.session.setAutoCommit(true);
     }
 
+    /**
+     * ddl job处理函数。
+     * @param dc
+     * @param job
+     * @return
+     */
     public Pair<Long, String> handleDDLJobTable(DdlContext dc, DdlJob job) {
         if (job.isDone() || job.isRollbackDone()) {
             if (job.isDone()) {
@@ -94,7 +100,10 @@ public class DdlWorker {
         // onJobRunBefore
         onJobRunBefore(job);
         dc.rUnlock();
+
+        //执行ddl job。
         Pair<Long, String> res = runDdlJob(dc, job);
+
         if (res == null) {
             LogUtils.error(log, "run ddl job get res null");
             return Pair.of(0L, "run ddl job get res null");
@@ -209,6 +218,12 @@ public class DdlWorker {
         return null;
     }
 
+    /**
+     * 执行ddl job。
+     * @param dc
+     * @param job
+     * @return
+     */
     public Pair<Long, String> runDdlJob(DdlContext dc, DdlJob job) {
         if (job.getRealStartTs() == 0) {
             job.setRealStartTs(System.currentTimeMillis());
@@ -420,6 +435,12 @@ public class DdlWorker {
         return res;
     }
 
+    /**
+     * drop table操作处理函数。
+     * @param dc
+     * @param job
+     * @return
+     */
     public static Pair<Long, String> onDropTable(DdlContext dc, DdlJob job) {
         Pair<TableDefinitionWithId, String> tableRes = checkTableExistAndCancelNonExistJob(job, job.getSchemaId());
         if (tableRes.getValue() != null && tableRes.getKey() == null) {

@@ -16,37 +16,96 @@
 
 package io.dingodb.store.api.transaction.data;
 
+/**
+ * 事务操作的操作码：
+ *      表示store需要执行的操作。
+ */
 public enum Op {
-    NONE(0), PUT(1), DELETE(2), PUTIFABSENT(3), ROLLBACK(4), LOCK(5), CheckNotExists(6);
+    NONE(0),
+    PUT(1),
+    DELETE(2),
+    PUTIFABSENT(3),
+    ROLLBACK(4),
+    LOCK(5),
+    CheckNotExists(6);
+
     private final int code;
 
+    /**
+     * 构造函数。
+     * @param code
+     */
     Op(int code) {
         this.code = code;
     }
 
+    /**
+     * 获得操作码。
+     * @return
+     */
     public int getCode() {
         return code;
     }
 
+    /**
+     * 判断是否为none操作。
+     * @param code
+     * @return
+     */
     public static boolean isNone(int code) {
         return code == NONE.getCode();
     }
+
+    /**
+     * 判断是否为put操作。
+     * @param code
+     * @return
+     */
     public static boolean isPut(int code) {
         return code == PUT.getCode();
     }
+
+    /**
+     * 判断是否为delete操作。
+     * @param code
+     * @return
+     */
     public static boolean isDelete(int code) {
         return code == DELETE.getCode();
     }
+
+    /**
+     * 判断是否为不存在则添加操作。
+     * @param code
+     * @return
+     */
     public static boolean isPutIfAbsent(int code) {
         return code == PUTIFABSENT.getCode();
     }
+
+    /**
+     * 判断是否为回滚操作。
+     * @param code
+     * @return
+     */
     public static boolean isRollBack(int code) {
         return code == ROLLBACK.getCode();
     }
+
+    /**
+     * 判断是否为锁操作。
+     * @param code
+     * @return
+     */
     public static boolean isLock(int code) {
         return code == LOCK.getCode();
     }
 
+    /**
+     * 根据操作码返回对应枚举值。
+     * @param code
+     * @return
+     */
     public static Op forNumber(int code) {
         switch (code) {
             case 0: return NONE;

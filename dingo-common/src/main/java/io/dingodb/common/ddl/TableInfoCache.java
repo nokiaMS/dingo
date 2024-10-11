@@ -20,15 +20,37 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * 表信息缓存对象。
+ */
 @EqualsAndHashCode
 @Data
 @AllArgsConstructor
 public class TableInfoCache {
+    /**
+     * table id。
+     */
     private long tableId;
+
+    /**
+     * 表名称。
+     */
     private String name;
+
+    /**
+     * schema id。
+     */
     private long schemaId;
+
+    /**
+     * schema名称。
+     */
     private String schemaName;
 
+    /**
+     * 深拷贝操作，创建一个新的TableInfoCache，赋值对应字段后返回新对象。
+     * @return
+     */
     public TableInfoCache deepCopy() {
         return new TableInfoCache(tableId, name, schemaId, schemaName);
     }

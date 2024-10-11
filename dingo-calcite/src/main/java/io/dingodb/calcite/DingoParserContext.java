@@ -60,6 +60,10 @@ import static io.dingodb.calcite.DingoParser.PARSER_CONFIG;
 public final class DingoParserContext implements Context {
     @Getter
     private final DingoCatalogReader catalogReader;
+
+    /**
+     * dingodb的root schema。
+     */
     @Getter
     private final RootCalciteSchema rootSchema;
     @Getter

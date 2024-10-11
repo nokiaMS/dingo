@@ -22,14 +22,26 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
+/**
+ * 创建并返回TsoService对象。
+ */
 public interface TsoServiceProvider {
 
+    /**
+     * 定义了一个默认的TsoServiceProvider实现。
+     */
     @Slf4j
     class Impl {
+        /**
+         * 创建了一个默认实例。
+         */
         private static final Impl INSTANCE = new Impl();
 
         private final TsoServiceProvider serviceProvider;
 
+        /**
+         * 默认构造函数。
+         */
         private Impl() {
             Iterator<TsoServiceProvider> iterator
                 = ServiceLoader.load(TsoServiceProvider.class).iterator();
@@ -42,6 +54,10 @@ public interface TsoServiceProvider {
 
     TsoService get();
 
+    /**
+     * 返回默认的serviceProvider实例。
+     * @return  默认的serviceProvider。
+     */
     static TsoServiceProvider getDefault() {
         return Impl.INSTANCE.serviceProvider;
     }

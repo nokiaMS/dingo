@@ -48,36 +48,65 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
+/**
+ * Ddl处理句柄。
+ */
 @Slf4j
 public final class DdlHandler {
 
+    /**
+     * 返回默认实例。
+     */
     public static final DdlHandler INSTANCE = new DdlHandler();
 
+    /**
+     * 是一个阻塞队列。
+     */
     private static final BlockingQueue<DdlJob> asyncJobQueue = new LinkedBlockingDeque<>(1000);
 
     private static final String INSERT_JOB = "insert into mysql.dingo_ddl_job(job_id, reorg, schema_ids, table_ids, job_meta, type, processing) values";
 
+    /**
+     * 构造函数。
+     */
     private DdlHandler() {
+        //启动队列处理线程，即在对象构建的时候就启动了队列的处理，根据队列的特性，有数据时进行处理，无数据时线程阻塞等待。
         start();
     }
 
+    /**
+     * 启动线程进行队列处理。
+     */
     public static void start() {
+        //启动线程进行队列处理。
         new Thread(DdlHandler::limitDdlJobs).start();
     }
 
+    /**
+     * asyncJobQueue的处理函数。
+     */
     public static void limitDdlJobs() {
         while (!Thread.interrupted()) {
+            //从队列中读取一个job对象。
             DdlJob ddlJob = Utils.forceTake(asyncJobQueue);
             try {
+                //把ddl job对象插入到表中。
                 insertDDLJobs2Table(ddlJob, true);
             } catch (Exception e) {
                 LogUtils.error(log, "[ddl] insert ddl into table error", e);
             }
         }
         LogUtils.error(log, "[ddl] limitDdlJobs exit");
+
+        //再次调用自身从queue中读取数据并处理。
         limitDdlJobs();
     }
 
+    /**
+     * ddl操作插入到表中。
+     * @param job
+     * @param updateRawArgs
+     */
     public static void insertDDLJobs2Table(DdlJob job, boolean updateRawArgs) {
         if (job == null) {
             return;
@@ -86,6 +115,8 @@ public final class DdlHandler {
         List<Long> ids = service.genGlobalIDs(1);
         // jdbc insert into ddlJob to table
         // insert into dingo_ddl_job
+
+        //构建ddl操作插入表的sql字符串。
         StringBuilder sqlBuilder = new StringBuilder(INSERT_JOB);
         String format = "(%d, %b, %s, %s, %s, %d, %b)";
         long jobId;
@@ -101,18 +132,27 @@ public final class DdlHandler {
             )
         );
         String sql = sqlBuilder.toString();
+
+        //执行sql语句。
         String error = SessionUtil.INSTANCE.exeUpdateInTxn(sql);
         if (error != null) {
             LogUtils.error(log, "[ddl-error] insert ddl to table,sql:{}", sql);
         }
         LogUtils.info(log, "insert job 2 table,jobId:{}", jobId);
+
+        //异步消息通知。
         asyncNotify(1L, jobId);
     }
 
+    /**
+     * 异步消息通知。
+     * @param size
+     * @param jobId
+     */
     public static void asyncNotify(Long size, long jobId) {
         ExecutionEnvironment env = ExecutionEnvironment.INSTANCE;
         if (env.ddlOwner.get()) {
-            DdlJobEventSource ddlJobEventSource = DdlJobEventSource.ddlJobEventSource;
+            DdlJobEventSource ddlJobEventSource = DdlJobEventSource.ddlJobEventSource;  //这么使用是为了如果没有初始化的话那么会初始化。
             DdlJobEventSource.forcePut(ddlJobEventSource.ownerJobQueue, size);
         } else {
             InfoSchemaService infoSchemaService = InfoSchemaService.root();
@@ -192,8 +232,8 @@ public final class DdlHandler {
     }
 
     public static void dropSchema(SchemaInfo schemaInfo, String connId) {
-        DdlJob job = DdlJob.builder()
-            .actionType(ActionType.ActionDropSchema)
+        DdlJob job = DdlJob.builder()       //构建一个DdlJob对象。
+            .actionType(ActionType.ActionDropSchema)        //设置actionType字段。
             .schemaState(schemaInfo.getSchemaState())
             .schemaName(schemaInfo.getName())
             .schemaId(schemaInfo.getSchemaId()).build();

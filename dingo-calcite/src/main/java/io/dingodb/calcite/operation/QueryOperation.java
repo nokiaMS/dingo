@@ -21,18 +21,36 @@ import io.dingodb.common.profile.ExecProfile;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * 定义 QueryOperation 抽象类，即数据库查询操作的接口，表示“查询操作”。
+ * 继承类需要实现两个接口：
+ *      getIterator() - 返回结果数据。
+ *      columns() - 返回列标签。
+ */
 public abstract class QueryOperation implements Operation {
 
     public ExecProfile execProfile;
 
+    /**
+     * 返回结果数据集的迭代器。
+     * @return
+     */
     public Iterator<Object[]> iterator() {
         Iterator<Object[]> iterator = getIterator();
         this.execProfile.end();
         return iterator;
     }
 
+    /**
+     * 获得结果数据集的迭代器，即展示结果中各行与各列的值。
+     * @return
+     */
     abstract Iterator<Object[]> getIterator();
 
+    /**
+     * 定义类返回结果中的列名称信息，即展示结果中各列名称。
+     * @return
+     */
     public abstract List<String> columns();
 
     public void initExecProfile(ExecProfile execProfile) {

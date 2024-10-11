@@ -57,13 +57,36 @@ import static io.dingodb.store.proxy.mapper.Mapper.MAPPER;
 
 @Slf4j
 public abstract class CommitBase {
+    /**
+     * 存储服务对象，定义于sdk中。
+     */
     StoreService storeService;
+
+    /**
+     * 事务隔离级别。
+     */
     int isolationLevel = 2;
+
+    /**
+     * 分区id。
+     */
     CommonId partId;
 
+    /**
+     * 从配置文件中获得coordnator列表。
+     */
     static Set<Location> coordinators = Services.parse(Configuration.coordinators());
+
+    /**
+     * 事务超时时间。(guoxu：是否可以放在公共的配置位置？)
+     */
     long statementTimeout = 50000;
 
+    /**
+     * 构造函数。
+     * @param storeService  存储服务。
+     * @param partId        分区id。
+     */
     public CommitBase(StoreService storeService, CommonId partId) {
         this.storeService = storeService;
         this.partId = partId;
@@ -71,18 +94,31 @@ public abstract class CommitBase {
 
     public abstract TransactionStoreInstance refreshRegion(byte[] key);
 
+    /**
+     * 事务提交。
+     * @param key   事务key。
+     * @param value 事务值。
+     * @param opCode
+     * @param startTs   事务开始时间戳。
+     */
     public void commit(byte[] key, byte[] value, int opCode, long startTs) {
+        //构建事务id。
         CommonId txnId = getTxnId(startTs);
+        //是否需要执行2阶段提交的prewrite操作。
         boolean need2PcPreWrite = false;
+        //是否需要执行2阶段提交的commit操作。
         boolean need2PcCommit = false;
 
         try {
+            //构建mutation。
             Mutation mutation = new Mutation(
                 io.dingodb.store.api.transaction.data.Op.forNumber(opCode), key, value, 0, null, null
             );
 
+            //判断是否使用1pc进行事务提交。
             if(ScopeVariables.transaction1Pc()) {
                 try {
+                    //因为只有一个mutation，所以如果使用1pc，直接发送primary key预写请求就OK了。
                     preWritePrimaryKey(mutation, startTs, true);
                     return;
                 } catch (OnePcNeedTwoPcCommit e) {
@@ -123,15 +159,24 @@ public abstract class CommitBase {
         }
     }
 
+    /**
+     * 预写primary key。
+     * @param mutation  待写入的mutation。
+     * @param startTs   事务开始时间戳。
+     * @param enableOnePc   是否允许1pc。
+     */
     private void preWritePrimaryKey(
         Mutation mutation,
         long startTs,
         boolean enableOnePc
     ) {
+        //获得主键。
         byte[] primaryKey = mutation.getKey();
         // 2、call sdk preWritePrimaryKey
+        //获得锁的超时时间（锁超时时间为60秒。guoxu:此处的magic number应该需要优化。）
         long lockTtl = TsoService.getDefault().timestamp() + 60000;
 
+        //构建预写主键请求。
         TxnPreWrite txnPreWrite = TxnPreWrite.builder()
             .isolationLevel(IsolationLevel.of(
                 IsolationLevel.ReadCommitted.getCode()
@@ -266,6 +311,11 @@ public abstract class CommitBase {
         }
     }
 
+    /**
+     * 构建并返回事务id。
+     * @param startTs   事务开始时间戳。
+     * @return
+     */
     public static CommonId getTxnId(long startTs) {
         return new CommonId(CommonId.CommonType.TRANSACTION,
             0, startTs);

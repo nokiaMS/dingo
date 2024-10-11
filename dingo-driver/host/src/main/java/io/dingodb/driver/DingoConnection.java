@@ -372,6 +372,11 @@ public class DingoConnection extends AvaticaConnection implements CalcitePrepare
         return context.getRootSchema();
     }
 
+    /**
+     * calcite中获得可变root schema的函数。
+     * 在dingo实现中就是获得root schema。
+     * @return
+     */
     @Override
     public CalciteSchema getMutableRootSchema() {
         return context.getRootSchema();
@@ -445,17 +450,28 @@ public class DingoConnection extends AvaticaConnection implements CalcitePrepare
         }
     }
 
+    /**
+     * 执行sql语句并返回结果。
+     * @param statement
+     * @param sql       sql字符串。
+     * @param maxRowCount
+     * @return
+     * @throws SQLException
+     * @throws NoSuchStatementException
+     */
     @Override
     protected Meta.ExecuteResult prepareAndExecuteInternal(
         AvaticaStatement statement,
         String sql,
         long maxRowCount
     ) throws SQLException, NoSuchStatementException {
+        //如果sql语句过长（超过1000个字符）则截断。
         if (sql.length() > 1000) {
             this.command = sql.substring(0, 1000);
         } else {
             this.command = sql;
         }
+
         this.commandStartTime = System.currentTimeMillis();
         try {
             return super.prepareAndExecuteInternal(statement, sql, maxRowCount);

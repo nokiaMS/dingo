@@ -38,17 +38,34 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * infoSchema构建器：
+ *      infoSchema对象包含了一个数据库里的所有shcema信息。
+ */
 @Slf4j
 public class InfoSchemaBuilder {
 
+    /**
+     * infoSchema对象。
+     */
     InfoSchema is;
 
+    /**
+     * 桶数量。
+     */
     private static final int bucketCount = 100;
 
+    /**
+     * 默认构建函数。
+     */
     public InfoSchemaBuilder() {
         //is = new InfoSchema();
     }
 
+    /**
+     * 使用已有的infoSchema对象创建一个新的infoSchema对象。
+     * @param oldSchema
+     */
     public void initWithOldInfoSchema(InfoSchema oldSchema) {
         if (is == null) {
             is = new InfoSchema();
@@ -58,6 +75,11 @@ public class InfoSchemaBuilder {
         this.is.sortedTablesBuckets = deepCopyBuckets(oldSchema.getSortedTablesBuckets());
     }
 
+    /**
+     * 对<schema-tables>映射进行深拷贝。
+     * @param original
+     * @return
+     */
     public static Map<String, SchemaTables> deepCopy(Map<String, SchemaTables> original) {
         if (original == null) return null;
         Map<String, SchemaTables> copy = new ConcurrentHashMap<>();
@@ -67,6 +89,11 @@ public class InfoSchemaBuilder {
         return copy;
     }
 
+    /**
+     * 对buckets信息进行深拷贝。
+     * @param old
+     * @return
+     */
     public static Map<Integer, List<TableInfoCache>> deepCopyBuckets(
         Map<Integer, List<TableInfoCache>> old
     ) {
@@ -81,6 +108,12 @@ public class InfoSchemaBuilder {
         return copy;
     }
 
+    /**
+     * infoSchema初始化函数。
+     * @param schemaInfos           schema列表。
+     * @param schemaVersion         版本号。
+     * @param infoSchemaService     infoSchemaService对象。
+     */
     public void initWithSchemaInfos(List<SchemaInfo> schemaInfos, long schemaVersion, InfoSchemaService infoSchemaService) {
         if (is == null) {
             is = new InfoSchema();
@@ -91,6 +124,11 @@ public class InfoSchemaBuilder {
         }
     }
 
+    /**
+     * 为每个schema创建tables。
+     * @param schemaInfo
+     * @param infoSchemaService
+     */
     public void createSchemaTablesForDB(SchemaInfo schemaInfo, InfoSchemaService infoSchemaService) {
         Map<String, Table> tableMap = infoSchemaService.listTableDef(schemaInfo.getSchemaId());
         SchemaTables schemaTables = new SchemaTables(schemaInfo, tableMap);
@@ -109,6 +147,13 @@ public class InfoSchemaBuilder {
         });
     }
 
+    /**
+     * 根据租户信息创建infoSchema.
+     * @param schemaInfos
+     * @param schemaVersion
+     * @param infoSchemaService
+     * @param tenantId
+     */
     public void initWithSchemaInfosByTenant(
         List<SchemaInfo> schemaInfos,
         long schemaVersion,
@@ -124,6 +169,12 @@ public class InfoSchemaBuilder {
         }
     }
 
+    /**
+     * 根据租户信息创建每个schema关联的tables.
+     * @param schemaInfo
+     * @param infoSchemaService
+     * @param tenantId
+     */
     public void createSchemaTablesForDBByTenant(
         SchemaInfo schemaInfo,
         InfoSchemaService infoSchemaService,
@@ -159,6 +210,7 @@ public class InfoSchemaBuilder {
             case ActionDropSchema:
                 return applyDropSchema(schemaDiff);
             case ActionDropTable:
+                //drop table操作，从数据库中删除一个表。
                 return applyDropTable(schemaDiff);
             case ActionDropIndex:
                 return applyDropIndex(schemaDiff);
@@ -213,6 +265,11 @@ public class InfoSchemaBuilder {
         return Pair.of(tableIdList, null);
     }
 
+    /**
+     * create table操作。
+     * @param diff  schema变动相关。
+     * @return
+     */
     public Pair<List<Long>, String> applyCreateTable(SchemaDiff diff) {
         try {
             InfoSchemaService schemaService = InfoSchemaService.root();
@@ -246,8 +303,14 @@ public class InfoSchemaBuilder {
         }
     }
 
+    /**
+     * 执行drop table操作。
+     * @param diff
+     * @return
+     */
     public Pair<List<Long>, String> applyDropTable(SchemaDiff diff) {
         try {
+            //删除表。
             dropTable(diff.getSchemaId(), diff.getTableId());
 
             List<Long> tableIdList = new ArrayList<>();
@@ -259,6 +322,12 @@ public class InfoSchemaBuilder {
         }
     }
 
+    /**
+     * 删除一个表。
+     * @param schemaId      schema id。
+     * @param tableId       table id。
+     * @return
+     */
     public boolean dropTable(long schemaId, long tableId) {
         int idx = bucketIdx(tableId);
         List<TableInfoCache> buckets = this.is.sortedTablesBuckets.get(idx);
@@ -275,8 +344,11 @@ public class InfoSchemaBuilder {
         if (schemaInfo == null) {
             return false;
         }
+
+        //从infoSchema中删除表。
         this.is.dropTable(schemaInfo.getName(), tableInfo.getName());
         buckets.remove(tableInfo);
+
         return true;
     }
 
@@ -345,6 +417,11 @@ public class InfoSchemaBuilder {
         }
     }
 
+    /**
+     * 根据table id计算table索引。
+     * @param tableId   表id。
+     * @return  返回表索引位置（即表对象存放在哪个桶中）。
+     */
     public static int bucketIdx(long tableId) {
         return (int) (tableId % bucketCount);
     }

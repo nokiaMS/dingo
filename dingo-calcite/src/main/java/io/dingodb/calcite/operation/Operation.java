@@ -16,6 +16,9 @@
 
 package io.dingodb.calcite.operation;
 
+/**
+ * 定义了数据库操作接口。
+ */
 public interface Operation {
 
 }

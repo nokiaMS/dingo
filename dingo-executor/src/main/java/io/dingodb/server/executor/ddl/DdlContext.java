@@ -59,10 +59,16 @@ public class DdlContext {
 
     private WaitSchemaSyncedController wc = new WaitSchemaSyncedController();
 
+    /**
+     * schema同步服务。
+     */
     private SchemaSyncerService schemaSyncer = SchemaSyncerService.root();
 
     private SchemaVersionManager sv = new SchemaVersionManager();
 
+    /**
+     * ddl worker pool，用于处理ddl job。
+     */
     private DdlWorkerPool ddlJobPool;
     private DdlWorkerPool ddlReorgPool;
 

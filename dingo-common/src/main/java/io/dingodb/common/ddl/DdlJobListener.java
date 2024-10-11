@@ -18,6 +18,13 @@ package io.dingodb.common.ddl;
 
 import java.util.EventListener;
 
+/**
+ * ddl job事件监听器。
+ */
 public interface DdlJobListener extends EventListener {
+    /**
+     * 事件发生会调用此函数。
+     * @param event
+     */
     void eventOccurred(DdlJobEvent event);
 }
