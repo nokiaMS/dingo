@@ -16,8 +16,12 @@
 
 package io.dingodb.exec.operator;
 
+import io.dingodb.cluster.ClusterService;
+import io.dingodb.common.annotation.ApiDeclaration;
+import io.dingodb.common.config.DingoConfiguration;
 import io.dingodb.common.profile.StmtSummaryMap;
 import io.dingodb.common.log.LogUtils;
+import io.dingodb.common.Location;
 import io.dingodb.exec.dag.Vertex;
 import io.dingodb.exec.operator.params.InfoSchemaScanParam;
 import io.dingodb.meta.DdlService;
@@ -27,6 +31,7 @@ import io.dingodb.meta.entity.Column;
 import io.dingodb.meta.entity.InfoSchema;
 import io.dingodb.meta.entity.Partition;
 import io.dingodb.meta.entity.Table;
+import io.dingodb.net.api.ApiRegistry;
 import io.dingodb.transaction.api.TransactionService;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -84,6 +89,8 @@ public class InfoSchemaScanOperator extends FilterProjectSourceOperator {
                 return StmtSummaryMap.iterator();
             case "DINGO_MDL_VIEW":
                 return getMdlView();
+            case "DINGO_TRX":
+                return getTxnInfo();
             default:
                 throw new RuntimeException("no source");
         }
@@ -373,6 +380,51 @@ public class InfoSchemaScanOperator extends FilterProjectSourceOperator {
 
     private static Iterator<Object[]> getMdlView() {
         return TransactionService.getDefault().getMdlInfo();
+    }
+
+    /**
+     * Api to get remote txn informations.
+     */
+    public interface Api {
+        @ApiDeclaration
+        default List<Object[]> txnInfos() {
+            return new ArrayList<>();
+        }
+
+        @ApiDeclaration
+        default List<Object[]> getTxnInfos() {
+            List<Object[]> results = new ArrayList<>();
+            Iterator<Object[]> iterator = TransactionService.getDefault().getTxnInfo();
+            if(iterator.hasNext()) {
+                results.add(iterator.next());
+            }
+            return results;
+        }
+
+    }
+
+    private static Iterator<Object[]> getTxnInfo() {
+        List<Object[]> result = new ArrayList<>();
+
+        //get remote txn infos.
+        List<Location> locations = ClusterService.getDefault().getComputingLocations();
+        //deal with per location.
+        for(Location loc : locations) {
+            if(!loc.equals(DingoConfiguration.location())) {
+                //only deal with remote location.
+                Api metaApi = ApiRegistry.getDefault().proxy(InfoSchemaScanOperator.Api.class, loc);
+                result = metaApi.getTxnInfos();
+            }
+        }
+
+        //get local txn infos.
+        Iterator<Object[]> iterator = TransactionService.getDefault().getTxnInfo();
+        while (iterator.hasNext()) {
+            result.add(iterator.next());
+        }
+
+        return result.stream().iterator();
+        //return TransactionService.getDefault().getTxnInfo();
     }
 
 }

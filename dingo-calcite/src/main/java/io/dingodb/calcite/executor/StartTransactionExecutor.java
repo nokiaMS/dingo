@@ -16,10 +16,16 @@
 
 package io.dingodb.calcite.executor;
 
+import io.dingodb.common.annotation.ApiDeclaration;
+import io.dingodb.exec.transaction.impl.TransactionManager;
+import io.dingodb.transaction.api.TableLock;
+import io.dingodb.transaction.api.TableLockService;
 import io.dingodb.transaction.api.TransactionService;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StartTransactionExecutor implements DdlExecutor {
 
