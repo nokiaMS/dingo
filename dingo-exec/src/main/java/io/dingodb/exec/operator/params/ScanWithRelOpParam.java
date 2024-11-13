@@ -60,12 +60,19 @@ import java.util.stream.IntStream;
 public class ScanWithRelOpParam extends ScanParam {
     @JsonProperty("outSchema")
     protected final DingoType outputSchema;
+
+    /**
+     * 是否进行表达式下推。
+     */
     @JsonProperty("pushDown")
     protected final boolean pushDown;
 
     @Getter
     protected final transient DingoRelConfig config;
 
+    /**
+     * 表操作。
+     */
     @Getter
     @JsonProperty("rel")
     @JsonSerialize(using = RelOpSerializer.class)
@@ -133,6 +140,10 @@ public class ScanWithRelOpParam extends ScanParam {
         config = new DingoRelConfig();
     }
 
+    /**
+     * 算子参数初始化。
+     * @param vertex
+     */
     @Override
     public void init(Vertex vertex) {
         super.init(vertex);
@@ -141,6 +152,7 @@ public class ScanWithRelOpParam extends ScanParam {
             (TupleType) vertex.getParasType().getType()
         ), config);
         if (pushDown) {
+            //构造输出流对象。
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             if (RelOpCoder.INSTANCE.visit(relOp, os) == CodingFlag.OK) {
                 List<Integer> selection = IntStream.range(0, schema.fieldCount())
