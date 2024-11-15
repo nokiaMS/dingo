@@ -54,6 +54,10 @@ public interface CodecServiceProvider {
     }
 
 
+    /**
+     * 获得codec service实例。
+     * @return
+     */
     CodecService get();
 
 }

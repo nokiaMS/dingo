@@ -85,12 +85,22 @@ public final class CodecService implements io.dingodb.codec.CodecService {
             throw new UnsupportedEncodingException();
         }
 
+        /**
+         * 对value编码.
+         * @param tuple tuple  待补充.
+         * @return 待补充.
+         */
         @Override
         @SneakyThrows
         public KeyValue encode(Object @NonNull [] tuple) {
             return mapping(delegate.encode((Object[]) type.convertTo(tuple, DingoConverter.INSTANCE)));
         }
 
+        /**
+         * 对key编码.
+         * @param tuple key tuple 待补充.
+         * @return 待补充.
+         */
         @Override
         @SneakyThrows
         public byte[] encodeKey(Object[] tuple) {

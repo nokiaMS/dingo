@@ -21,7 +21,7 @@ import io.dingodb.common.type.TupleMapping;
 import java.io.IOException;
 
 /**
- * 编码器。
+ * 序列化接口定义。
  */
 public interface Codec {
     /**

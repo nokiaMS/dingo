@@ -27,8 +27,15 @@ import io.dingodb.common.type.TupleMapping;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * codec service接口。
+ */
 public interface CodecService {
 
+    /**
+     * 获得默认的codec service实例。
+     * @return
+     */
     static CodecService getDefault() {
         return CodecServiceProvider.getDefault().get();
     }

@@ -25,7 +25,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public interface KeyValueCodec {
 
     /**
-     * Encode the given tuple to key value. 把tuple编码为KeyValue。
+     * Encode the given tuple to key value. 对value部分进行编码。
      * @param tuple tuple
      * @return key value
      */
@@ -57,7 +57,7 @@ public interface KeyValueCodec {
     //
 
     /**
-     * Encode the given tuple to prefix format key.
+     * Encode the given tuple to prefix format key.  对前缀格式key编码。
      * @param tuple tuple
      * @param count key element count
      * @return prefix format key
@@ -65,7 +65,7 @@ public interface KeyValueCodec {
     byte[] encodeKeyPrefix(Object[] tuple, int count);
 
     /**
-     * Decode the given prefix format key to tuple.
+     * Decode the given prefix format key to tuple. 对前缀格式key解码。
      * @param keyPrefix prefix format key
      * @return tuple
      */
