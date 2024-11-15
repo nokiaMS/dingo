@@ -18,6 +18,9 @@ package io.dingodb.serial.schema;
 
 import java.util.List;
 
+/**
+ * long list序列化schema.
+ */
 public class LongListSchema implements DingoSchema {
     private int index;
     private boolean notNull;

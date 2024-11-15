@@ -24,6 +24,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * record反序列化。
+ */
 public class RecordDecoder {
     private final List<DingoSchema> schemas;
     private final short schemaVersion;

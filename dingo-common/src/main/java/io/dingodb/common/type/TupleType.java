@@ -33,6 +33,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
+/**
+ * 定义了一个tuple类型，表示一个table中的一行。
+ */
 @JsonTypeName("tuple")
 @EqualsAndHashCode(of = {"fields"}, callSuper = true)
 public class TupleType extends AbstractDingoType {
@@ -75,6 +78,10 @@ public class TupleType extends AbstractDingoType {
         return checkFieldCount(converter.convertTupleFrom(value, this));
     }
 
+    /**
+     * 返回一个tuple中列的总数量。
+     * @return
+     */
     @Override
     public int fieldCount() {
         return fields.length;
@@ -85,6 +92,11 @@ public class TupleType extends AbstractDingoType {
         return fields[(int) index];
     }
 
+    /**
+     * 根据参数中的位置信息列表，构造一个新的tuple，tuple中按照参数中列表的顺序包含了各个列的元类型。
+     * @param mapping the mapping
+     * @return
+     */
     @Override
     public @NonNull TupleType select(@NonNull TupleMapping mapping) {
         DingoType[] newElements = new DingoType[mapping.size()];
@@ -102,6 +114,10 @@ public class TupleType extends AbstractDingoType {
         );
     }
 
+    /**
+     * 从当前tuple结构获得对应的DingoSchema列表。
+     * @return
+     */
     @Override
     public List<DingoSchema> toDingoSchemas() {
         List<DingoSchema> schemas = new ArrayList<>(fields.length);

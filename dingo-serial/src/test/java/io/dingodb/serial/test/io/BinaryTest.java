@@ -52,6 +52,7 @@ public class BinaryTest {
 
         byte[] result = be.getByteArray();
 
+        //进行二进制解码。
         BinaryDecoder bd = new BinaryDecoder(result);
         assertEquals(bd.readBoolean(), false);
         assertEquals(bd.readBoolean(), null);

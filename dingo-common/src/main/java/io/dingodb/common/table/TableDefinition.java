@@ -48,6 +48,9 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * 定义了table结构。
+ */
 @Builder
 @JsonPropertyOrder({"name", "columns", "ttl", "partition", "prop", "engine"})
 @EqualsAndHashCode
@@ -55,10 +58,16 @@ import java.util.stream.IntStream;
 public class TableDefinition {
     private static final Parser PARSER = Parser.JSON;
 
+    /**
+     * 表名称。
+     */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("name")
     private final String name;
 
+    /**
+     * 列信息。
+     */
     @JsonProperty("columns")
     @Getter
     @Setter
@@ -78,6 +87,9 @@ public class TableDefinition {
     @Setter
     private PartitionDefinition partDefinition;
 
+    /**
+     * 表的engine。
+     */
     @JsonProperty("engine")
     @Getter
     @Setter
@@ -197,6 +209,11 @@ public class TableDefinition {
         return result;
     }
 
+    /**
+     *  返回列的位置列表，当参数为true的时候，返回主键列的位置列表；当参数为false的时候，返回非主键列的位置列表。
+     * @param keyOrValue    表示获得key的位置列表还是value的位置列表。
+     * @return
+     */
     private @NonNull List<Integer> getColumnIndices(boolean keyOrValue) {
         List<Integer> indices = new LinkedList<>();
         int index = 0;
@@ -257,6 +274,10 @@ public class TableDefinition {
         return TupleMapping.of(getColumnIndices(keyOrValue));
     }
 
+    /**
+     * 获得主键列的位置列表。
+     * @return
+     */
     @JsonIgnore
     public @NonNull List<Integer> getKeyColumnIndices() {
         return getColumnIndices(true);
@@ -296,6 +317,10 @@ public class TableDefinition {
         return valueSchema;
     }
 
+    /**
+     * 返回表的tuple类型，代表一个表的结构化信息。
+     * @return
+     */
     @JsonIgnore
     public DingoType getDingoType() {
         return DingoTypeFactory.tuple(

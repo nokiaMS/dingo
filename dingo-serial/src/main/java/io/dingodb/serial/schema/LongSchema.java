@@ -16,6 +16,9 @@
 
 package io.dingodb.serial.schema;
 
+/**
+ * long类型的序列化schema。
+ */
 public class LongSchema implements DingoSchema {
     private int index;
     private boolean notNull;

@@ -32,13 +32,23 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * map数据类型。
+ */
 @JsonTypeName("map")
 @JsonPropertyOrder({"element", "nullable"})
 @EqualsAndHashCode(of = {"keyType", "valueType"}, callSuper = true)
 public class MapType extends NullableType {
+    /**
+     * key类型。
+     */
     @Getter
     @JsonProperty("key")
     private final DingoType keyType;
+
+    /**
+     * value类型。
+     */
     @Getter
     @JsonProperty("value")
     private final DingoType valueType;
@@ -79,6 +89,11 @@ public class MapType extends NullableType {
         return null;
     }
 
+    /**
+     * map的序列化接口。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return null;

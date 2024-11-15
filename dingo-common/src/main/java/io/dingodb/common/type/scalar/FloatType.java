@@ -26,6 +26,9 @@ import io.dingodb.serial.schema.DingoSchema;
 import io.dingodb.serial.schema.FloatSchema;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+/**
+ * float数据类型。
+ */
 @JsonTypeName("float")
 public class FloatType extends AbstractScalarType {
     @JsonCreator
@@ -38,6 +41,11 @@ public class FloatType extends AbstractScalarType {
         return new FloatType(nullable);
     }
 
+    /**
+     * 序列化接口实现。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return new FloatSchema(index);

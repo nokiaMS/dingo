@@ -27,6 +27,9 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+/**
+ * 以各个列在行中的位置信息作为索引，存储了各索引位置的信息供计算使用。
+ */
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public final class TupleMapping {
     @JsonValue
@@ -113,6 +116,11 @@ public final class TupleMapping {
         return -1;
     }
 
+    /**
+     * 从num个位置信息中排除出本对象中的位置，构造出新的位置列表，然后返回这个新的位置列表。
+     * @param num
+     * @return
+     */
     public @NonNull TupleMapping inverse(int num) {
         int[] result = new int[num - mappings.length];
         int j = 0;
@@ -167,6 +175,11 @@ public final class TupleMapping {
         }
     }
 
+    /**
+     * 按照mappings中的位置列表，拷贝src中对应位置的元素到dst中，从而构造出与src一样的tuple dst并返回。
+     * @param src
+     * @return
+     */
     public Object @NonNull [] revMap(Object[] src) {
         Object[] dst = new Object[mappings.length];
         revMap(dst, src);

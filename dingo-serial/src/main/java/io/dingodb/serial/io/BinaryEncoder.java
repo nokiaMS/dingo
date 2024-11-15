@@ -20,7 +20,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * 二进制编码器。
+ */
 public class BinaryEncoder {
+    /**
+     * 二进制编码的存储位置(工作缓冲区)
+     */
     private byte[] buf;
     private byte[] lengthBuf;
     private int forwardPosition = 0;
@@ -36,6 +42,10 @@ public class BinaryEncoder {
         this.reversePosition = reverseInitCap - 1;
     }
 
+    /**
+     * 构造函数。
+     * @param buf
+     */
     public BinaryEncoder(byte[] buf) {
         this.buf = buf;
     }
@@ -55,11 +65,32 @@ public class BinaryEncoder {
         this.reversePosition = lengthBuf.length - 1;
     }
 
+    /**
+     * 向工作buf中写入一个字节。
+     * @param b
+     */
     public void write(byte b) {
         ensureRemainder(1);
         buf[forwardPosition++] = b;
     }
 
+    /**
+     * bool值的二进制编码：
+     * 格式：
+     *      byte1：null标志位；
+     *      byte2：bool值：
+     * 典型值：
+     *      null：
+     *          0x0 0x0
+     *      true:
+     *          0x1 0x1
+     *      false:
+     *          0x1 0x0
+     *
+     * @param bool
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeBoolean(Object bool) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(2);
         if (bool == null) {
@@ -71,6 +102,18 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * 写入short类型的值。
+     * short类型占用3个字节， is_null | value.
+     * 格式：
+     *      byte1: is null标志位。
+     *      byte2: short的高8 bits。
+     *      byte3: short的低8 bits。
+     *
+     * @param sh
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeShort(Object sh) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(3);
         if (sh == null) {
@@ -79,11 +122,17 @@ public class BinaryEncoder {
             buf[forwardPosition++] = 0;
         } else {
             writeNotNull();
-            buf[forwardPosition++] = (byte) ((Short) sh >>> 8);
+            buf[forwardPosition++] = (byte) ((Short) sh >>> 8);     //无符号右移。
             buf[forwardPosition++] = (byte) ((Short) sh >>> 0);
         }
     }
 
+    /**
+     * short类型的key序列化函数。
+     * @param sh
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeKeyShort(Object sh) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(3);
         if (sh == null) {
@@ -92,11 +141,17 @@ public class BinaryEncoder {
             buf[forwardPosition++] = 0;
         } else {
             writeNotNull();
-            buf[forwardPosition++] = (byte) ((Short) sh >>> 8 ^ 0x80);
+            buf[forwardPosition++] = (byte) ((Short) sh >>> 8 ^ 0x80);  //与非key有差异。
             buf[forwardPosition++] = (byte) ((Short) sh >>> 0);
         }
     }
 
+    /**
+     * int的序列化。
+     * @param in
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeInt(Object in) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(5);
         if (in == null) {
@@ -114,6 +169,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * int key的序列化。
+     * @param in
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeKeyInt(Object in) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(5);
         if (in == null) {
@@ -131,6 +192,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * 浮点数序列化。
+     * @param fo
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeFloat(Object fo) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(5);
         if (fo == null) {
@@ -141,7 +208,7 @@ public class BinaryEncoder {
             buf[forwardPosition++] = 0;
         } else {
             writeNotNull();
-            int in = Float.floatToIntBits((Float) fo);
+            int in = Float.floatToIntBits((Float) fo);      //按照bits转换成int。
             buf[forwardPosition++] = (byte) (in >>> 24);
             buf[forwardPosition++] = (byte) (in >>> 16);
             buf[forwardPosition++] = (byte) (in >>> 8);
@@ -149,6 +216,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * float key的序列化函数。
+     * @param fo
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeKeyFloat(Object fo) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(5);
         if (fo == null) {
@@ -159,7 +232,7 @@ public class BinaryEncoder {
             buf[forwardPosition++] = 0;
         } else {
             writeNotNull();
-            int in = (Float.floatToIntBits((Float) fo));
+            int in = (Float.floatToIntBits((Float) fo));        //按照bits转换成int值。
             if (in >= 0) {
                 buf[forwardPosition++] = (byte) (in >>> 24 ^ 0x80);
                 buf[forwardPosition++] = (byte) (in >>> 16);
@@ -174,6 +247,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * long的序列化。
+     * @param ln
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeLong(Object ln) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(9);
         if (ln == null) {
@@ -199,6 +278,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * long key的序列化。
+     * @param ln
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeKeyLong(Object ln) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(9);
         if (ln == null) {
@@ -224,6 +309,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * double的序列化。
+     * @param dl
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeDouble(Object dl) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(9);
         if (dl == null) {
@@ -250,6 +341,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * double key的序列化。
+     * @param dl
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeKeyDouble(Object dl) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(9);
         if (dl == null) {
@@ -264,7 +361,7 @@ public class BinaryEncoder {
             buf[forwardPosition++] = 0;
         } else {
             writeNotNull();
-            long ln = (Double.doubleToLongBits((Double) dl));
+            long ln = (Double.doubleToLongBits((Double) dl));   //double转换成long。
             if (ln >= 0) {
                 buf[forwardPosition++] = (byte) (ln >>> 56 ^ 0x80);
                 buf[forwardPosition++] = (byte) (ln >>> 48);
@@ -287,6 +384,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * bytes的序列化。
+     * @param bytes
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeBytes(Object bytes) throws IndexOutOfBoundsException, ClassCastException {
         if (bytes == null) {
             ensureRemainder(1);
@@ -358,6 +461,15 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * string序列化。
+     * 结构：
+     *      byte1：in_null（1）
+     *      byte2:
+     * @param string
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeString(Object string) throws IndexOutOfBoundsException, ClassCastException {
         if (string == null) {
             ensureRemainder(1);
@@ -367,7 +479,9 @@ public class BinaryEncoder {
             writeNotNull();
             writeLength(0);
         } else {
+            //获得指定编码下的字符串的字节序列。
             byte[] value = ((String) string).getBytes(StandardCharsets.UTF_8);
+            //进行二进制编码。
             internWriteBytes(value);
         }
     }
@@ -431,6 +545,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * bool list编码。
+     * @param booleanList
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void writeBooleanList(Object booleanList) throws IndexOutOfBoundsException, ClassCastException {
         if (booleanList == null) {
             ensureRemainder(1);
@@ -446,6 +566,12 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * 更新bool list的编码值。
+     * @param booleanList
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public void updateBooleanList(Object booleanList) throws IndexOutOfBoundsException, ClassCastException {
         int startMark = forwardPosition;
         skipBooleanList();
@@ -737,14 +863,27 @@ public class BinaryEncoder {
         }
     }
 
+    /**
+     * null值用0表示，写入null值。
+     * @throws IndexOutOfBoundsException
+     */
     private void writeNull() throws IndexOutOfBoundsException {
         buf[forwardPosition++] = 0;
     }
 
+    /**
+     * 非null值用1表示。
+     * @throws IndexOutOfBoundsException
+     */
     private void writeNotNull() throws IndexOutOfBoundsException {
         buf[forwardPosition++] = 1;
     }
 
+    /**
+     * 长度数值序列化，长度是个整型，按照整型序列化。
+     * @param length
+     * @throws IndexOutOfBoundsException
+     */
     private void writeLength(int length) throws IndexOutOfBoundsException {
         buf[forwardPosition++] = (byte) (length >> 24);
         buf[forwardPosition++] = (byte) (length >> 16);
@@ -752,6 +891,11 @@ public class BinaryEncoder {
         buf[forwardPosition++] = (byte) length;
     }
 
+    /**
+     * key长度的序列化。
+     * @param length
+     * @throws IndexOutOfBoundsException
+     */
     private void writeKeyLength(int length) throws IndexOutOfBoundsException {
         lengthBuf[reversePosition--] = (byte) (length >>> 24);
         lengthBuf[reversePosition--] = (byte) (length >>> 16);
@@ -759,14 +903,26 @@ public class BinaryEncoder {
         lengthBuf[reversePosition--] = (byte) length;
     }
 
+    /**
+     * bytes数组的序列化。
+     * @param value
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     private void internWriteBytes(byte[] value) throws IndexOutOfBoundsException, ClassCastException {
         ensureRemainder(5 + value.length);
         writeNotNull();
-        writeLength(value.length);
+        writeLength(value.length);  //写入字符串长度字段。
         System.arraycopy(value, 0, buf, forwardPosition, value.length);
         forwardPosition += value.length;
     }
 
+    /**
+     * bytes key的序列化。
+     * @param value
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     private void internWriteKeyBytes(byte[] value) throws IndexOutOfBoundsException, ClassCastException {
         int groupNum = value.length / 8;
         int size = (groupNum + 1) * 9;
@@ -796,18 +952,36 @@ public class BinaryEncoder {
         buf[forwardPosition++] = (byte) (255 - remindZero);
     }
 
+    /**
+     * 跳过一个byte。
+     */
     public void skipByte() {
         skip(1);
     }
 
+    /**
+     * 判断是否为null。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     private boolean readIsNull() throws IndexOutOfBoundsException {
         return buf[forwardPosition++] == 0;
     }
 
+    /**
+     * 读取一个byte。
+     * @return
+     */
     public byte read() {
         return buf[forwardPosition++];
     }
 
+    /**
+     * 读取一个short。
+     * @return
+     * @throws IndexOutOfBoundsException
+     * @throws ClassCastException
+     */
     public Short readShort() throws IndexOutOfBoundsException, ClassCastException {
         if (readIsNull()) {
             forwardPosition += 2;
@@ -817,6 +991,11 @@ public class BinaryEncoder {
             | buf[forwardPosition++] & 0xFF);
     }
 
+    /**
+     * 读取长度。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     private int readLength() throws IndexOutOfBoundsException {
         return (((buf[forwardPosition++] & 0xFF) << 24)
             | ((buf[forwardPosition++] & 0xFF) << 16)
@@ -835,25 +1014,41 @@ public class BinaryEncoder {
         reversePosition -= 4;
     }
 
+    /**
+     * 跳过n个bytes。
+     * @param length
+     */
     public void skip(int length) {
         forwardPosition += length;
     }
 
+    /**
+     * 保证buf剩余的空间能够满足length，如果不能够满足则进行空间的扩充，重新分配内存。
+     * @param length
+     */
     private void ensureRemainder(int length) {
         if (buf.length - forwardPosition < length) {
             buf = Arrays.copyOf(buf, forwardPosition + length);
         }
     }
 
+    /**
+     * 获得序列化后的字节数组。
+     * @return
+     */
     public byte[] getByteArray() {
         if (lengthBuf != null && lengthBuf.length > 0) {
             ensureRemainder(lengthBuf.length);
             System.arraycopy(lengthBuf, 0, buf, forwardPosition, lengthBuf.length);
             forwardPosition += lengthBuf.length;
         }
+
+        //只拷贝有效部分。
         if (forwardPosition != buf.length) {
             buf = Arrays.copyOf(buf, forwardPosition);
         }
+
+        //换回序列化值。
         return buf;
     }
 

@@ -26,22 +26,44 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
+/**
+ * 序列化测试类。
+ */
 public class TestDingoCodec {
+    /**
+     * 表定义。
+     */
     private static TableDefinition tableDefinition;
 
+    /**
+     * 序列化对象。
+     */
     private static KeyValueCodec codec;
 
+    /**
+     * 测试数据。
+     */
     private final Object[] record = new Object[]{1, "name", 0.5d};
 
+    /**
+     * 测试数据初始化。
+     * @throws IOException
+     */
     @BeforeAll
     public static void setupAll() throws IOException {
+        //构造表。
         tableDefinition = TableDefinition.readJson(
             TestDingoCodec.class.getResourceAsStream("/table-test.json")
         );
+        //构造序列化对象。
         codec =
             new DingoKeyValueCodec(tableDefinition.getDingoType(), tableDefinition.getKeyMapping());
     }
 
+    /**
+     * 测试对一个key进行编码和解码。
+     * @throws IOException
+     */
     @Test
     public void testRecord() throws IOException {
         KeyValue keyValue = codec.encode(record);
@@ -49,6 +71,10 @@ public class TestDingoCodec {
         Assertions.assertArrayEquals(result, record);
     }
 
+    /**
+     * 测试对key序列化。
+     * @throws IOException
+     */
     @Test
     public void testKey() throws IOException {
         Object[] keys = tableDefinition.getKeyMapping().revMap(record);
@@ -57,6 +83,10 @@ public class TestDingoCodec {
         Assertions.assertArrayEquals(key, keyValue.getKey());
     }
 
+    /**
+     * 测试对value的序列化。
+     * @throws IOException
+     */
     @Test
     public void testValue() throws IOException {
         KeyValue keyValue = codec.encode(record);

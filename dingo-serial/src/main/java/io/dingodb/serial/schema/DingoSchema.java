@@ -16,6 +16,9 @@
 
 package io.dingodb.serial.schema;
 
+/**
+ * 定义了各种类型对应的元信息对象。
+ */
 public interface DingoSchema {
     Type getType();
 

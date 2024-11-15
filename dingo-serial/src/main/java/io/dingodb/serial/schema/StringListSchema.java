@@ -18,6 +18,9 @@ package io.dingodb.serial.schema;
 
 import java.util.List;
 
+/**
+ * string list的序列化实现。
+ */
 public class StringListSchema implements DingoSchema {
     private int index;
     private boolean notNull;

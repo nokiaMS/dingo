@@ -20,7 +20,17 @@ import io.dingodb.common.type.TupleMapping;
 
 import java.io.IOException;
 
+/**
+ * 编码器。
+ */
 public interface Codec {
+    /**
+     * 对一个tuple进行编码。
+     * @param tuple
+     * @return
+     * @throws IOException
+     * @throws ClassCastException
+     */
     byte[] encode(Object[] tuple) throws IOException, ClassCastException;
 
     byte[] encode(Object[] tuple, TupleMapping mapping) throws IOException, ClassCastException;
@@ -28,6 +38,13 @@ public interface Codec {
     byte[] encode(byte[] origin, Object[] tuple, int[] schemaIndex)
         throws IOException, ClassCastException;
 
+    /**
+     * 对key进行编码。
+     * @param tuple
+     * @return
+     * @throws IOException
+     * @throws ClassCastException
+     */
     default byte[] encodeKey(Object[] tuple) throws IOException, ClassCastException {
         return encode(tuple);
     }

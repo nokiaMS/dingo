@@ -68,6 +68,11 @@ public final class DingoTypeFactory {
         scalarGenerators.put("ANY", ObjectType::new);
     }
 
+    /**
+     * 给定列类型列表，构造一个tuple类型。（dingo的类型也是一个对象。）
+     * @param fields
+     * @return
+     */
     public static @NonNull TupleType tuple(DingoType[] fields) {
         return new TupleType(fields);
     }

@@ -28,6 +28,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.math.BigDecimal;
 
+/**
+ * decimal数据类型。
+ */
 @JsonTypeName("decimal")
 public class DecimalType extends AbstractScalarType {
     @JsonCreator
@@ -40,6 +43,11 @@ public class DecimalType extends AbstractScalarType {
         return new DecimalType(nullable);
     }
 
+    /**
+     * 序列化接口。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return new StringSchema(index, 0);

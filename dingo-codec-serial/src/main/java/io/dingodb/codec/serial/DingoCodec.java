@@ -39,11 +39,20 @@ public class DingoCodec implements Codec {
         this(schemas, mapping, false);
     }
 
+    /**
+     * 编码器。
+     * @param schemas   待编码的schema列表。
+     * @param mapping   编码列的位置信息映射。
+     * @param isKey     是否是对key进行编码。
+     */
     public DingoCodec(List<DingoSchema> schemas, TupleMapping mapping, boolean isKey) {
+        //构造record encoder。
         this.re = new RecordEncoder(schemas, (short) 0,
             CodeTag.UNFINISHFALG, CodeTag.FINISHEDFALG, CodeTag.DELETEFLAG, null, isKey);
+        //构造record decoder。
         this.rd = new RecordDecoder(schemas, (short) 0,
             CodeTag.UNFINISHFALG, CodeTag.FINISHEDFALG, CodeTag.DELETEFLAG, null, isKey);
+        //存储待编码列的位置信息。
         this.mapping = mapping;
     }
 
@@ -69,6 +78,13 @@ public class DingoCodec implements Codec {
         return re.encode(origin, schemaIndex, tuple);
     }
 
+    /**
+     * 对key部分编码。
+     * @param tuple     待编码的key部分。
+     * @return
+     * @throws IOException
+     * @throws ClassCastException
+     */
     @Override
     public byte[] encodeKey(Object[] tuple) throws IOException, ClassCastException {
         return re.encodeKey(tuple);

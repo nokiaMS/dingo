@@ -16,6 +16,9 @@
 
 package io.dingodb.serial.schema;
 
+/**
+ * 字符串序列化。
+ */
 public class StringSchema implements DingoSchema {
     private int index;
     private int maxLength;

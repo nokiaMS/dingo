@@ -26,6 +26,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.List;
 
+/**
+ * null数据类型。
+ */
 @JsonTypeName("null")
 public class NullType extends AbstractDingoType {
     public static final NullType NULL = new NullType();
@@ -70,6 +73,11 @@ public class NullType extends AbstractDingoType {
         return null;
     }
 
+    /**
+     * null类型的序列化schema。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         // TODO: no dingo null schema

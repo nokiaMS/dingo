@@ -31,6 +31,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.sql.Date;
 
+/**
+ * date数据类型。
+ */
 @JsonTypeName("date")
 public class DateType extends AbstractScalarType {
     @JsonCreator
@@ -43,6 +46,11 @@ public class DateType extends AbstractScalarType {
         return new DateType(nullable);
     }
 
+    /**
+     * 序列化接口实现。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return new LongSchema(index);

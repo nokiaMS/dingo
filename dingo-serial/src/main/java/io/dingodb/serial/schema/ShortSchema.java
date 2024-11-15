@@ -16,6 +16,9 @@
 
 package io.dingodb.serial.schema;
 
+/**
+ * short类型的序列化schema。
+ */
 public class ShortSchema implements DingoSchema {
     private int index;
     private boolean notNull;

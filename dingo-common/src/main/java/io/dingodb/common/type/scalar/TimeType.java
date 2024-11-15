@@ -31,6 +31,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.sql.Time;
 
+/**
+ * time数据类型。
+ */
 @JsonTypeName("time")
 public class TimeType extends AbstractScalarType {
     @JsonCreator
@@ -43,6 +46,11 @@ public class TimeType extends AbstractScalarType {
         return new TimeType(nullable);
     }
 
+    /**
+     * time数据类型的序列化接口。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return new LongSchema(index);

@@ -24,8 +24,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * record序列化。
+ */
 public class RecordEncoder {
     private final List<DingoSchema> schemas;
+    //schema版本号。
     private final short schemaVersion;
     private final int approPerRecordSize;
     private final int perRecordKeySize;
@@ -59,10 +63,19 @@ public class RecordEncoder {
         this.perRecordKeySize = approSize[1];
     }
 
+    /**
+     * 对一个record进行序列化。
+     * @param record
+     * @return
+     * @throws IOException
+     */
     public byte[] encode(Object[] record) throws IOException {
         BinaryEncoder be = new BinaryEncoder(new byte[approPerRecordSize]);
+        //写入结束标记。
         be.write(finishedFlag);
+        //写入事务id。
         be.writeBytes(transactionId);
+        //写入schema版本号。
         be.writeShort(schemaVersion);
         for (DingoSchema schema : schemas) {
             switch (schema.getType()) {
@@ -117,9 +130,18 @@ public class RecordEncoder {
                 default:
             }
         }
+        //返回编码完成的字节序列。
         return be.getByteArray();
     }
 
+    /**
+     * 对record进行编码。
+     * @param record
+     * @param index
+     * @param columns
+     * @return
+     * @throws IOException
+     */
     public byte[] encode(byte[] record, int[] index, Object[] columns) throws IOException {
         BinaryEncoder be = new BinaryEncoder(record);
         be.skipByte();
@@ -230,10 +252,24 @@ public class RecordEncoder {
         }
     }
 
+    /**
+     * 对key部分进行编码。
+     * @param record
+     * @return
+     * @throws IOException
+     */
     public byte[] encodeKey(Object[] record) throws IOException {
         return internalEncodeKey(record, schemas.size()).getByteArray();
     }
 
+    /**
+     * 对key进行编码。
+     * @param record
+     * @param index
+     * @param columns
+     * @return
+     * @throws IOException
+     */
     public byte[] encodeKey(byte[] record, int[] index, Object[] columns) throws IOException {
         BinaryEncoder be = new BinaryEncoder(record, perRecordKeySize);
         be.skipByte();
@@ -352,10 +388,20 @@ public class RecordEncoder {
         return internalEncodeKey(record, columnCount).getByteArrayWithoutLength();
     }
 
+    /**
+     * 对key部分进行编码。
+     * @param record
+     * @param columnCount
+     * @return
+     * @throws IOException
+     */
     private BinaryEncoder internalEncodeKey(Object[] record, int columnCount) throws IOException {
         BinaryEncoder be = new BinaryEncoder(new byte[approPerRecordSize], new byte[perRecordKeySize]);
+        //写入结束标记。
         be.write(finishedFlag);
+        //写入事务id。
         be.writeBytes(transactionId);
+        //写入schema版本号。
         be.writeShort(schemaVersion);
         for (DingoSchema schema : schemas) {
             if (--columnCount < 0) {

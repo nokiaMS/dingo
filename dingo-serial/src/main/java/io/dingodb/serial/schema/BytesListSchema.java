@@ -18,6 +18,9 @@ package io.dingodb.serial.schema;
 
 import java.util.List;
 
+/**
+ * bytes list的序列化实现。
+ */
 public class BytesListSchema implements DingoSchema {
     private int index;
     private boolean notNull;

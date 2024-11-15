@@ -16,6 +16,9 @@
 
 package io.dingodb.serial.schema;
 
+/**
+ * double序列化Schema。
+ */
 public class DoubleSchema implements DingoSchema {
     private int index;
     private boolean notNull;

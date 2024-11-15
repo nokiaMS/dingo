@@ -20,8 +20,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 
+/**
+ * 可为空数据类型。
+ */
 @EqualsAndHashCode(of = {"nullable"}, callSuper = false)
 public abstract class NullableType extends AbstractDingoType {
+    /**
+     * 数据类型是否可以为null.
+     */
     protected final boolean nullable;
 
     protected NullableType(boolean nullable) {
@@ -29,6 +35,10 @@ public abstract class NullableType extends AbstractDingoType {
         this.nullable = nullable;
     }
 
+    /**
+     * 判断数据类型是否可以为空。
+     * @return
+     */
     // Need this getter to enable jackson afterburner module access.
     @JsonProperty(value = "nullable", defaultValue = "false")
     @JsonInclude(value = JsonInclude.Include.NON_DEFAULT)

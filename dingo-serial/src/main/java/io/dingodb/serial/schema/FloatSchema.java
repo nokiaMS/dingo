@@ -16,6 +16,9 @@
 
 package io.dingodb.serial.schema;
 
+/**
+ * Float序列化Schema.
+ */
 public class FloatSchema implements DingoSchema {
     private int index;
     private boolean notNull;

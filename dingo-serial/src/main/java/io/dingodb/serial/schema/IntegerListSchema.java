@@ -18,6 +18,9 @@ package io.dingodb.serial.schema;
 
 import java.util.List;
 
+/**
+ * intList序列化schema.
+ */
 public class IntegerListSchema implements DingoSchema {
     private int index;
     private boolean notNull;

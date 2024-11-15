@@ -18,6 +18,9 @@ package io.dingodb.serial.schema;
 
 import java.util.List;
 
+/**
+ * short list的序列化schema.
+ */
 public class ShortListSchema implements DingoSchema {
     private int index;
     private boolean notNull;

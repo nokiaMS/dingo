@@ -18,6 +18,9 @@ package io.dingodb.serial.schema;
 
 import java.util.List;
 
+/**
+ * double list的序列化实现。
+ */
 public class DoubleListSchema implements DingoSchema {
     private int index;
     private boolean notNull;

@@ -20,16 +20,29 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 二进制解码。
+ */
 public class BinaryDecoder {
     private final byte[] buf;
     private int forwardPosition = 0;
     private int reversePosition;
 
+    /**
+     * 构建二进制解码器。
+     * @param buf
+     */
     public BinaryDecoder(byte[] buf) {
+        //工作区。
         this.buf = buf;
         this.reversePosition = buf.length - 1;
     }
 
+    /**
+     * 解码bool类型。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Boolean readBoolean() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             forwardPosition++;
@@ -38,6 +51,11 @@ public class BinaryDecoder {
         return buf[forwardPosition++] != 0;
     }
 
+    /**
+     * 解码short类型。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Short readShort() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             forwardPosition += 2;
@@ -47,6 +65,11 @@ public class BinaryDecoder {
             | buf[forwardPosition++] & 0xFF);
     }
 
+    /**
+     * 解码short key值。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Short readKeyShort() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             forwardPosition += 2;
@@ -56,6 +79,11 @@ public class BinaryDecoder {
             | buf[forwardPosition++] & 0xFF);
     }
 
+    /**
+     * 读取int值。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Integer readInt() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             forwardPosition += 4;
@@ -67,6 +95,11 @@ public class BinaryDecoder {
             | buf[forwardPosition++] & 0xFF);
     }
 
+    /**
+     * 读取int key值。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Integer readKeyInt() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             forwardPosition += 4;
@@ -78,6 +111,11 @@ public class BinaryDecoder {
             | buf[forwardPosition++] & 0xFF);
     }
 
+    /**
+     * 读取float值。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Float readFloat() throws IndexOutOfBoundsException {
         Integer i = readInt();
         if (i == null) {
@@ -86,6 +124,11 @@ public class BinaryDecoder {
         return Float.intBitsToFloat(i);
     }
 
+    /**
+     * 读取float key值。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Float readKeyFloat() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             forwardPosition += 4;
@@ -106,6 +149,11 @@ public class BinaryDecoder {
         return Float.intBitsToFloat(i);
     }
 
+    /**
+     * 读取long.
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Long readLong() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             forwardPosition += 8;
@@ -119,6 +167,11 @@ public class BinaryDecoder {
         return l;
     }
 
+    /**
+     * 读取 key long。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Long readKeyLong() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             forwardPosition += 8;
@@ -133,6 +186,11 @@ public class BinaryDecoder {
         return l;
     }
 
+    /**
+     * 读取double。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Double readDouble() throws IndexOutOfBoundsException {
         Long l = readLong();
         if (l == null) {
@@ -141,6 +199,11 @@ public class BinaryDecoder {
         return Double.longBitsToDouble(l);
     }
 
+    /**
+     * 读取double key.
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public Double readKeyDouble() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             forwardPosition += 8;
@@ -162,6 +225,11 @@ public class BinaryDecoder {
         return Double.longBitsToDouble(l);
     }
 
+    /**
+     * 读取字节。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public byte[] readBytes() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             return null;
@@ -177,6 +245,11 @@ public class BinaryDecoder {
         }
     }
 
+    /**
+     * 读取key字节。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public byte[] readKeyBytes() throws IndexOutOfBoundsException {
         if (readIsNull()) {
             return null;
@@ -204,6 +277,11 @@ public class BinaryDecoder {
         }
     }
 
+    /**
+     * 读取字符串。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public String readString() throws IndexOutOfBoundsException {
         byte[] buf = readBytes();
         if (buf == null) {
@@ -215,6 +293,11 @@ public class BinaryDecoder {
         return new String(buf, StandardCharsets.UTF_8);
     }
 
+    /**
+     * 读取key字符串。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public String readKeyString() throws IndexOutOfBoundsException {
         byte[] buf = readKeyBytes();
         if (buf == null) {
@@ -420,6 +503,11 @@ public class BinaryDecoder {
         return buf.length - forwardPosition;
     }
 
+    /**
+     * 判断是否为null。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     private boolean readIsNull() throws IndexOutOfBoundsException {
         return buf[forwardPosition++] == 0;
     }

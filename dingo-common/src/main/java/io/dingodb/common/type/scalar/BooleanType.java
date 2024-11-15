@@ -26,6 +26,9 @@ import io.dingodb.serial.schema.BooleanSchema;
 import io.dingodb.serial.schema.DingoSchema;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+/**
+ * bool数据类型。
+ */
 @JsonTypeName("bool")
 public class BooleanType extends AbstractScalarType {
     @JsonCreator
@@ -38,6 +41,11 @@ public class BooleanType extends AbstractScalarType {
         return new BooleanType(nullable);
     }
 
+    /**
+     * 转换为对应的序列化Schema。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return new BooleanSchema(index);

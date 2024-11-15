@@ -26,6 +26,9 @@ import io.dingodb.serial.schema.DingoSchema;
 import io.dingodb.serial.schema.LongSchema;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+/**
+ * long数据类型。
+ */
 @JsonTypeName("long")
 public class LongType extends AbstractScalarType {
     @JsonCreator
@@ -38,6 +41,11 @@ public class LongType extends AbstractScalarType {
         return new LongType(nullable);
     }
 
+    /**
+     * long数据类型的序列化实现。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return new LongSchema(index);

@@ -18,6 +18,9 @@ package io.dingodb.serial.schema;
 
 import java.nio.ByteBuffer;
 
+/**
+ * 字节数组Schema序列化。
+ */
 public class BytesSchema implements DingoSchema {
 
     private int index;

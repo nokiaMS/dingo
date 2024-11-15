@@ -26,22 +26,60 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+/**
+ * 序列化。
+ */
 @Slf4j
 public class DingoKeyValueCodec implements KeyValueCodec {
 
+    /**
+     * 一个tuple的元信息，例如：tuple[int, int, char]
+     */
     private final DingoType schema;
+
+    /**
+     * 主键的元信息，如果1,2列是主键，那么主键的元信息就是tuple[int, int]
+     */
     private final DingoType keySchema;
+
+    /**
+     * 主键列在tuple中的位置映射，
+     */
     TupleMapping keyMapping;
+
+    /**
+     * 一个tuple的非主键列的位置映射。
+     */
     TupleMapping valueMapping;
+
+    /**
+     * key编码器。
+     */
     Codec keyCodec;
+
+    /**
+     * 非主键编码器。
+     */
     Codec valueCodec;
 
+    /**
+     * 序列化（给定了参数之后，就构建出了key与value的序列化器，之后给定具体的值的时候，使用这两个序列化器就能够进行一行的key与value的序列化了。）
+     * @param schema    表的tuple结构，例如：tuple[int, int, char]
+     * @param keyMapping    表的主键列的位置列表。
+     */
     public DingoKeyValueCodec(@NonNull DingoType schema, TupleMapping keyMapping) {
+        //一个表的元信息
         this.schema = schema;
+        //key元信息（此处的key即编码后k-v结构的key部分）
         this.keySchema = schema.select(keyMapping);
+        //key的位置映射。
         this.keyMapping = keyMapping;
+        //非主键列（即待编入value部分的列）的位置映射。
         this.valueMapping = keyMapping.inverse(schema.fieldCount());
+
+        //构造key的编码器。
         keyCodec = new DingoCodec(schema.select(keyMapping).toDingoSchemas(), keyMapping, true);
+        //构造value的编码器。
         valueCodec = new DingoCodec(schema.select(valueMapping).toDingoSchemas(), valueMapping, false);
     }
 
@@ -66,27 +104,51 @@ public class DingoKeyValueCodec implements KeyValueCodec {
         return keyCodec.decodeKey(key);
     }
 
+    /**
+     * 对value进行编码。
+     * @param tuple tuple
+     * @return
+     */
     @Override
     @SneakyThrows
     public KeyValue encode(Object @NonNull [] tuple) {
+        //把值的tuple按照行原信息进行转换，并存储转换后的结果到converted中。
         Object[] converted = (Object[]) schema.convertTo(tuple, DingoConverter.INSTANCE);
+        //存储转换后的key值。
         Object[] key = new Object[keyMapping.size()];
+        //存储转换后的value值。
         Object[] value = new Object[valueMapping.size()];
+
+        //根据位置信息获得转换后的key值。
         for (int i = 0; i < keyMapping.size(); i++) {
             key[i] = converted[keyMapping.get(i)];
         }
+
+        //根据位置信息获得转换后的value值。
         for (int i = 0; i < valueMapping.size(); i++) {
             value[i] = converted[valueMapping.get(i)];
         }
+
+        //对key进行编码。
         byte[] keyByte = keyCodec.encodeKey(key);
+        //对value进行编码。
         byte[] valueByte = valueCodec.encode(value);
+
+        //返回编码后的KeyValue对象。
         return new KeyValue(keyByte, valueByte);
     }
 
+    /**
+     * 对key进行编码。
+     * @param tuple key tuple
+     * @return
+     */
     @Override
     @SneakyThrows
     public byte[] encodeKey(Object[] tuple) {
+        //把key的值tuple按照key的元信息转换。
         Object[] key = (Object[]) keySchema.convertTo(keyMapping.revMap(tuple), DingoConverter.INSTANCE);
+        //对key进行编码。
         return keyCodec.encodeKey(key);
     }
 

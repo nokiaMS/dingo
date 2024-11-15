@@ -58,6 +58,7 @@ public class RecordTest {
         schemas.add(new LongSchema(10));
         schemas.add(new DoubleSchema(11));
 
+        //定义了一个record，模拟一个tuple。
         Object[] record = new Object[12];
         record[0] = true;
         record[1] = null;

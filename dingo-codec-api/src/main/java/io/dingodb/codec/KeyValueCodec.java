@@ -19,17 +19,20 @@ package io.dingodb.codec;
 import io.dingodb.common.store.KeyValue;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+/**
+ * 定义了key-value编码器接口。
+ */
 public interface KeyValueCodec {
 
     /**
-     * Encode the given tuple to key value.
+     * Encode the given tuple to key value. 把tuple编码为KeyValue。
      * @param tuple tuple
      * @return key value
      */
     KeyValue encode(Object @NonNull [] tuple);
 
     /**
-     * Decode the given key value to tuple.
+     * Decode the given key value to tuple. 从KeyValue解析出tuple。
      * @param keyValue key value
      * @return tuple
      */
@@ -38,14 +41,14 @@ public interface KeyValueCodec {
     //
 
     /**
-     * Encode the given tuple to byte array key.
+     * Encode the given tuple to byte array key.    对tuple的key进行编码。
      * @param tuple key tuple
      * @return key
      */
     byte[] encodeKey(Object[] tuple);
 
     /**
-     * Decode the given key to tuple.
+     * Decode the given key to tuple.   对tuple的key进行解码。
      * @param key key
      * @return key tuple
      */

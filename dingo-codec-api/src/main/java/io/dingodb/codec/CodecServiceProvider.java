@@ -22,8 +22,14 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
+/**
+ * 序列化服务提供器。
+ */
 public interface CodecServiceProvider {
 
+    /**
+     * 序列化服务提供器的默认实例。
+     */
     @Slf4j
     class Impl {
         private static final Impl INSTANCE = new Impl();
@@ -39,6 +45,10 @@ public interface CodecServiceProvider {
         }
     }
 
+    /**
+     * 获得默认的序列化服务对象。
+     * @return
+     */
     static CodecServiceProvider getDefault() {
         return Impl.INSTANCE.serviceProvider;
     }

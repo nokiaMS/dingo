@@ -31,17 +31,31 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 
+/**
+ * list数据类型。
+ */
 @JsonTypeName("list")
 @JsonPropertyOrder({"element", "nullable"})
 @EqualsAndHashCode(of = {"elementType"}, callSuper = true)
 public class ListType extends NullableType {
+    /**
+     * list类型的元素数据类型。
+     */
     @Getter
     @JsonProperty("element")
     private final DingoType elementType;
 
+    /**
+     * list自身的类型。(元素类型不同，list自身的类型也会发生变化)
+     */
     @Getter
     private final Type type;
 
+    /**
+     * 构造函数。
+     * @param elementType
+     * @param nullable
+     */
     @JsonCreator
     ListType(
         @JsonProperty("element") @NonNull DingoType elementType,
@@ -67,11 +81,20 @@ public class ListType extends NullableType {
         return new ListType(elementType, nullable);
     }
 
+    /**
+     * 序列化接口。
+     * @return
+     */
     @Override
     public List<DingoSchema> toDingoSchemas() {
         return null;
     }
 
+    /**
+     * 序列化Schema.
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         DingoSchema schema = TypeUtils.elementTypeToDingoList(elementType);

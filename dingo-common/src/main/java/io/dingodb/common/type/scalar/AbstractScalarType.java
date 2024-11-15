@@ -29,6 +29,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 
+/**
+ * 标量数据类型的抽象类。
+ */
 @EqualsAndHashCode(of = {"type"}, callSuper = true)
 public abstract class AbstractScalarType extends NullableType {
     @Getter
@@ -43,6 +46,10 @@ public abstract class AbstractScalarType extends NullableType {
         this.type = type;
     }
 
+    /**
+     * 序列化接口。
+     * @return
+     */
     @Override
     public List<DingoSchema> toDingoSchemas() {
         return null;

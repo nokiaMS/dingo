@@ -26,6 +26,9 @@ import io.dingodb.serial.schema.DingoSchema;
 import io.dingodb.serial.schema.StringSchema;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+/**
+ * string数据类型。
+ */
 @JsonTypeName("string")
 public class StringType extends AbstractScalarType {
     @JsonCreator
@@ -38,6 +41,11 @@ public class StringType extends AbstractScalarType {
         return new StringType(nullable);
     }
 
+    /**
+     * 序列化接口。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return new StringSchema(index, 0);

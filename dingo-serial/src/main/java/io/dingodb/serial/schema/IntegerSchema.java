@@ -16,6 +16,9 @@
 
 package io.dingodb.serial.schema;
 
+/**
+ * int类型的序列化schema。
+ */
 public class IntegerSchema implements DingoSchema {
     private int index;
     private boolean notNull;

@@ -67,13 +67,17 @@ public interface DingoType extends CompileContext {
     DingoType copy();
 
     /**
-     * Number of the fields for a tuple type.
+     * Number of the fields for a tuple type.   一个tuple中的列总数。
      *
      * @return number of fields if this is a tuple type;
      *     -1 if this is a scalar type
      */
     int fieldCount();
 
+    /**
+     * 获得对象自身的数据类型。
+     * @return
+     */
     @Override
     Type getType();
 
@@ -92,6 +96,10 @@ public interface DingoType extends CompileContext {
 
     @Nullable Object convertFrom(@Nullable Object value, @NonNull DataConverter converter);
 
+    /**
+     * 类型转换成DingoSchema (DingoSchema用于各种类型的序列化)
+     * @return
+     */
     List<DingoSchema> toDingoSchemas();
 
     DingoSchema toDingoSchema(int index);

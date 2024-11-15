@@ -18,9 +18,26 @@ package io.dingodb.serial.schema;
 
 import java.util.Locale;
 
+/**
+ * 定义了DingoSchema的类型，DingoSchema是用于序列化时的类型，每个类型都会转换为对应的schema，在序列化的时候类型相关的信息都存储在schema中了。
+ */
 public enum Type {
-    BOOLEAN, BOOLEANLIST, SHORT, SHORTLIST, INTEGER, INTEGERLIST, FLOAT, FLOATLIST,
-    LONG, LONGLIST, DOUBLE, DOUBLELIST, BYTES, BYTESLIST, STRING, STRINGLIST;
+    BOOLEAN,
+    BOOLEANLIST,
+    SHORT,
+    SHORTLIST,
+    INTEGER,
+    INTEGERLIST,
+    FLOAT,
+    FLOATLIST,
+    LONG,
+    LONGLIST,
+    DOUBLE,
+    DOUBLELIST,
+    BYTES,
+    BYTESLIST,
+    STRING,
+    STRINGLIST;
 
     private final String name;
 

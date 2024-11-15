@@ -23,6 +23,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * 定义了一个Row的概念。
+ */
 @Getter
 @Setter
 @ToString
@@ -31,9 +34,20 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class Row {
 
+    /**
+     * 主键列表。
+     */
     protected byte[] primaryKey;
     protected int[] indexes;
+
+    /**
+     * 每个列的宽度。
+     */
     protected int[] width;
+
+    /**
+     * 一个Row中包含的列。
+     */
     protected byte[][] columns;
 
 }

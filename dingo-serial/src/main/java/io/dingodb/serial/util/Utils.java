@@ -57,6 +57,7 @@ public final class Utils {
     }
 
     public static Object processNullColumn(DingoSchema schema, Object column) {
+        //如果列为空，则返回默认值。
         if (schema.isNotNull() && column == null) {
             return schema.getDefaultValue();
         }

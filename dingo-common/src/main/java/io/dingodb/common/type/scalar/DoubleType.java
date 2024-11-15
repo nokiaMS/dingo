@@ -26,6 +26,9 @@ import io.dingodb.serial.schema.DingoSchema;
 import io.dingodb.serial.schema.DoubleSchema;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+/**
+ * double数据类型。
+ */
 @JsonTypeName("double")
 public class DoubleType extends AbstractScalarType {
     @JsonCreator
@@ -38,6 +41,11 @@ public class DoubleType extends AbstractScalarType {
         return new DoubleType(nullable);
     }
 
+    /**
+     * 序列化接口。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return new DoubleSchema(index);

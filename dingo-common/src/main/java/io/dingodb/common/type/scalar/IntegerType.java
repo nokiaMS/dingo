@@ -26,6 +26,9 @@ import io.dingodb.serial.schema.DingoSchema;
 import io.dingodb.serial.schema.IntegerSchema;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+/**
+ * int数据类型。
+ */
 @JsonTypeName("int")
 public class IntegerType extends AbstractScalarType {
     @JsonCreator
@@ -38,6 +41,11 @@ public class IntegerType extends AbstractScalarType {
         return new IntegerType(nullable);
     }
 
+    /**
+     * int类型的序列化实现。
+     * @param index
+     * @return
+     */
     @Override
     public DingoSchema toDingoSchema(int index) {
         return new IntegerSchema(index);

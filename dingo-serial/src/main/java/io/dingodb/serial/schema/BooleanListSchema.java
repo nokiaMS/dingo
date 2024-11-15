@@ -18,6 +18,9 @@ package io.dingodb.serial.schema;
 
 import java.util.List;
 
+/**
+ * bool list的序列化实现。
+ */
 public class BooleanListSchema implements DingoSchema {
     private int index;
     private boolean notNull;
