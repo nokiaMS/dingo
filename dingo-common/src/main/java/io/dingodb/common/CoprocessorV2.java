@@ -44,6 +44,9 @@ public class CoprocessorV2 {
     @Builder.Default
     private byte[] relExpr = ByteArrayUtils.EMPTY_BYTES;
 
+    @Builder.Default
+    private boolean coprocessorFirst = false;
+
     @Setter
     private int limit;
 

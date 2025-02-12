@@ -1235,6 +1235,7 @@ public class TransactionStoreInstance {
         private boolean hasMore = true;
         private int limit;
         private String streamId;
+        private boolean coprocessorFirst;
         private boolean closeStream;
         private Iterator<KeyValue> keyValues;
         private final OperatorProfile rpcProfile;
@@ -1251,9 +1252,11 @@ public class TransactionStoreInstance {
             this.timeOut = timeOut;
             this.streamId = null;
             this.closeStream = false;
+            this.coprocessorFirst = false;
             limit = ScopeVariables.getRpcBatchSize();
             if (coprocessor != null && coprocessor.getLimit() > 0) {
                 limit = coprocessor.getLimit();
+                this.coprocessorFirst = coprocessor.isCoprocessorFirst();
             }
             this.coprocessor = MAPPER.coprocessorTo(coprocessor);
             Optional.ofNullable(this.coprocessor)
@@ -1272,6 +1275,116 @@ public class TransactionStoreInstance {
         }
 
         private synchronized void fetch() {
+            if (!hasMore) {
+                return;
+            }
+            long start = System.currentTimeMillis();
+            CommonId txnId = new CommonId(
+                CommonId.CommonType.TRANSACTION,
+                TransactionManager.getServerId().seq,
+                startTs
+            );
+            MdcUtils.setTxnId(txnId.toString());
+            long scanTimeOut = timeOut;
+            int n = 1;
+            List<Long> resolvedLocks = new ArrayList<>();
+
+            boolean closeStream = false;
+
+            TxnScanRequest txnScanRequest = MAPPER.scanTo(startTs, IsolationLevel.SnapshotIsolation, this.range);
+            txnScanRequest.setLimit(limit);
+            txnScanRequest.setCoprocessor(coprocessor);
+            if (txnScanRequest.getStreamMeta() == null) {
+                txnScanRequest.setStreamMeta(new StreamRequestMeta());
+            }
+            TxnScanResponse txnScanResponse;
+
+            //actually it is not a loop. Just run once in normal cases.
+            while (true) {
+                txnScanRequest.setResolveLocks(resolvedLocks);
+                txnScanRequest.getStreamMeta().setStreamId(streamId);
+                txnScanRequest.getStreamMeta().setClose(closeStream);
+
+                try {
+                    if (indexService != null) {
+                        txnScanResponse = indexService.txnScan(startTs, txnScanRequest);
+                    } else if (documentService != null) {
+                        txnScanResponse = documentService.txnScan(startTs, txnScanRequest);
+                    } else {
+                        txnScanResponse = storeService.txnScan(startTs, txnScanRequest);
+                    }
+
+                    if (txnScanResponse.getTxnResult() != null) {
+                        ResolveLockStatus resolveLockStatus = resolveLockConflict(
+                            singletonList(txnScanResponse.getTxnResult()),
+                            IsolationLevel.SnapshotIsolation.getCode(),
+                            startTs,
+                            resolvedLocks,
+                            "txnScan",
+                            true
+                        );
+                        if (resolveLockStatus == ResolveLockStatus.LOCK_TTL
+                            || resolveLockStatus == ResolveLockStatus.TXN_NOT_FOUND) {
+                            if (scanTimeOut < 0) {
+                                throw new RuntimeException("startTs:" + txnScanRequest.getStartTs()
+                                    + " resolve lock timeout");
+                            }
+                            try {
+                                long lockTtl = TxnVariables.WaitFixTime;
+                                if (n < TxnVariables.WaitFixNum) {
+                                    lockTtl = TxnVariables.WaitTime * n;
+                                }
+                                Thread.sleep(lockTtl);
+                                n++;
+                                scanTimeOut -= lockTtl;
+                                LogUtils.info(log, "txnScan lockInfo wait {} ms end.", lockTtl);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        continue;
+                    }
+
+                    if (txnScanResponse.getError() == null) {
+                        //get and set stream id for next request.
+                        if (txnScanResponse.getStreamMeta() != null) {
+                            this.streamId = txnScanResponse.getStreamMeta().getStreamId();
+                            keyValues = Optional.ofNullable(
+                                txnScanResponse.getKvs()).map(List::iterator).orElseGet(Collections::emptyIterator
+                            );
+                            hasMore = txnScanResponse.getStreamMeta().isHasMore();
+                            if (hasMore) {
+                                withStart = false;
+                                range = new StoreInstance.Range(
+                                    txnScanResponse.getEndKey(), range.end, withStart, range.withEnd
+                                );
+                            }
+                        } else {
+                            keyValues = Optional.ofNullable(txnScanResponse.getKvs())
+                                .map(List::iterator).orElseGet(Collections::emptyIterator);
+                            hasMore = false;
+                            break;
+                        }
+                    }
+                } catch (RequestErrorException e) {
+                    if (e.getErrorCode() == 10118) {
+                        //ESTREAM_EXPIRED: stream id is expired.
+                        this.streamId = null;
+                        LogUtils.info(log, "Stream id expired, info:{}", e.getMessage());
+                    } else {
+                        throw e;
+                    }
+                } catch (DingoClientException.InvalidRouteTableException e) {
+                    LogUtils.error(log, e.getMessage() ,e);
+                    throw e;
+                }
+                break;
+            }
+            long sub = System.currentTimeMillis() - start;
+            DingoMetrics.timer("txnScanRpc").update(sub, TimeUnit.MILLISECONDS);
+        }
+
+        private synchronized void coprocessorFetch() {
             if (!hasMore) {
                 return;
             }

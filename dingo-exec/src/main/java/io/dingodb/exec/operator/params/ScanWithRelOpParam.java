@@ -37,6 +37,10 @@ import io.dingodb.expr.common.type.TupleType;
 import io.dingodb.expr.rel.RelOp;
 import io.dingodb.expr.rel.json.RelOpDeserializer;
 import io.dingodb.expr.rel.json.RelOpSerializer;
+import io.dingodb.expr.rel.op.UngroupedAggregateOp;
+import io.dingodb.expr.runtime.expr.Expr;
+import io.dingodb.expr.runtime.expr.NullaryAggExpr;
+import io.dingodb.expr.runtime.op.NullaryOp;
 import lombok.Getter;
 import lombok.Setter;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -137,6 +141,7 @@ public class ScanWithRelOpParam extends ScanParam {
     @Override
     public void init(Vertex vertex) {
         super.init(vertex);
+
         relOp = relOp.compile(new DingoCompileContext(
             (TupleType) schema.getType(),
             (TupleType) vertex.getParasType().getType()
@@ -147,12 +152,26 @@ public class ScanWithRelOpParam extends ScanParam {
                 List<Integer> selection = IntStream.range(0, schema.fieldCount())
                     .boxed()
                     .collect(Collectors.toList());
+
+                boolean coprocessorFirst = false;
+                if(relOp instanceof UngroupedAggregateOp) {
+                    if(((UngroupedAggregateOp) relOp).getAggList().size() == 1) {
+                        Expr expr = ((UngroupedAggregateOp) relOp).getAggList().get(0);
+                        if(expr instanceof NullaryAggExpr) {
+                            if((((NullaryAggExpr)expr).getOp()).getName().equals("COUNT")) {
+                                coprocessorFirst = true;
+                            }
+                        }
+                    }
+                }
+
                 TupleMapping outputKeyMapping = TupleMapping.of(new int[]{});
                 coprocessor = CoprocessorV2.builder()
                     .originalSchema(SchemaWrapperUtils.buildSchemaWrapper(schema, keyMapping, tableId.seq))
                     .resultSchema(SchemaWrapperUtils.buildSchemaWrapper(outputSchema, outputKeyMapping, tableId.seq))
                     .selection(selection)
                     .relExpr(os.toByteArray())
+                    .coprocessorFirst(coprocessorFirst)
                     .codecVersion(codecVersion)
                     .build();
                 if (limit > 0) {
