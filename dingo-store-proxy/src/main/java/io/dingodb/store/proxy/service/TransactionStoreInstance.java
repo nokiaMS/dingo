@@ -49,6 +49,7 @@ import io.dingodb.sdk.service.entity.store.TxnBatchGetResponse;
 import io.dingodb.sdk.service.entity.store.TxnBatchRollbackResponse;
 import io.dingodb.sdk.service.entity.store.TxnCheckTxnStatusResponse;
 import io.dingodb.sdk.service.entity.store.TxnCommitResponse;
+import io.dingodb.sdk.service.entity.store.TxnCoprocessorType;
 import io.dingodb.sdk.service.entity.store.TxnHeartBeatRequest;
 import io.dingodb.sdk.service.entity.store.TxnPessimisticLockResponse;
 import io.dingodb.sdk.service.entity.store.TxnPessimisticRollbackResponse;
@@ -56,6 +57,8 @@ import io.dingodb.sdk.service.entity.store.TxnPrewriteRequest;
 import io.dingodb.sdk.service.entity.store.TxnPrewriteResponse;
 import io.dingodb.sdk.service.entity.store.TxnResolveLockResponse;
 import io.dingodb.sdk.service.entity.store.TxnResultInfo;
+import io.dingodb.sdk.service.entity.store.TxnCoprocessorRequest;
+import io.dingodb.sdk.service.entity.store.TxnCoprocessorResponse;
 import io.dingodb.sdk.service.entity.store.TxnScanRequest;
 import io.dingodb.sdk.service.entity.store.TxnScanResponse;
 import io.dingodb.sdk.service.entity.store.WriteConflict;
@@ -1256,6 +1259,8 @@ public class TransactionStoreInstance {
             limit = ScopeVariables.getRpcBatchSize();
             if (coprocessor != null && coprocessor.getLimit() > 0) {
                 limit = coprocessor.getLimit();
+            }
+            if(coprocessor != null) {
                 this.coprocessorFirst = coprocessor.isCoprocessorFirst();
             }
             this.coprocessor = MAPPER.coprocessorTo(coprocessor);
@@ -1269,7 +1274,13 @@ public class TransactionStoreInstance {
             rpcProfile = new OperatorProfile("continueTxnRpc");
             initRpcProfile.start();
             long start = System.currentTimeMillis();
-            fetch();
+
+            if(this.coprocessorFirst) {
+                coprocessorFetch();
+            } else {
+                fetch();
+            }
+
             initRpcProfile.time(start);
             initRpcProfile.end();
         }
@@ -1407,7 +1418,15 @@ public class TransactionStoreInstance {
             if (txnScanRequest.getStreamMeta() == null) {
                 txnScanRequest.setStreamMeta(new StreamRequestMeta());
             }
+
+            //make coprocessorRequest for pushdown.
+            TxnCoprocessorRequest txnCoprocessorRequest = new TxnCoprocessorRequest();
+            txnCoprocessorRequest.setCoprocessor(coprocessor);
+            txnCoprocessorRequest.setType(TxnCoprocessorType.COP_AGG_COUNT_WITHOUT_FILTER_PROJECT);
+            txnCoprocessorRequest.setTxnScanRequest(txnScanRequest);
+
             TxnScanResponse txnScanResponse;
+            TxnCoprocessorResponse txnCoprocessorResponse;
 
             //actually it is not a loop. Just run once in normal cases.
             while (true) {
@@ -1421,7 +1440,8 @@ public class TransactionStoreInstance {
                     } else if (documentService != null) {
                         txnScanResponse = documentService.txnScan(startTs, txnScanRequest);
                     } else {
-                        txnScanResponse = storeService.txnScan(startTs, txnScanRequest);
+                        txnCoprocessorResponse = storeService.txnCoprocessor(startTs, txnCoprocessorRequest);
+                        txnScanResponse = txnCoprocessorResponse.getTxnScanResponse();
                     }
 
                     if (txnScanResponse.getTxnResult() != null) {
