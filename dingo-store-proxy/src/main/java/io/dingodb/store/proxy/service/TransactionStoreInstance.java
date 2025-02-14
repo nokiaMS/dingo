@@ -1420,13 +1420,17 @@ public class TransactionStoreInstance {
             }
 
             //make coprocessorRequest for pushdown.
-            TxnCoprocessorRequest txnCoprocessorRequest = new TxnCoprocessorRequest();
+            TxnCoprocessorRequest txnCoprocessorRequest = MAPPER.coprocessorReqTo(TxnCoprocessorType.COP_AGG_COUNT_WITHOUT_FILTER_PROJECT,
+                IsolationLevel.SnapshotIsolation);
             txnCoprocessorRequest.setCoprocessor(coprocessor);
-            txnCoprocessorRequest.setType(TxnCoprocessorType.COP_AGG_COUNT_WITHOUT_FILTER_PROJECT);
+            //txnCoprocessorRequest.setType(TxnCoprocessorType.COP_AGG_COUNT_WITHOUT_FILTER_PROJECT);
             txnCoprocessorRequest.setTxnScanRequest(txnScanRequest);
 
             TxnScanResponse txnScanResponse;
             TxnCoprocessorResponse txnCoprocessorResponse;
+
+            //TxnCoprocessorRequest txnCoprocessorRequest1 = MAPPER.coprocessorReqTo(TxnCoprocessorType.COP_AGG_COUNT_WITHOUT_FILTER_PROJECT,
+            //    IsolationLevel.SnapshotIsolation);
 
             //actually it is not a loop. Just run once in normal cases.
             while (true) {
