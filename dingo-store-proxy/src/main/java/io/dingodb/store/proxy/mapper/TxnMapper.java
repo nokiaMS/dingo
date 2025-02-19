@@ -30,6 +30,8 @@ import io.dingodb.sdk.service.entity.store.TxnPessimisticRollbackRequest;
 import io.dingodb.sdk.service.entity.store.TxnPrewriteRequest;
 import io.dingodb.sdk.service.entity.store.TxnResolveLockRequest;
 import io.dingodb.sdk.service.entity.store.TxnScanRequest;
+import io.dingodb.sdk.service.entity.store.TxnCoprocessorRequest;
+import io.dingodb.sdk.service.entity.store.TxnCoprocessorType;
 import io.dingodb.store.api.StoreInstance;
 import io.dingodb.store.api.transaction.data.DocumentValue;
 import io.dingodb.store.api.transaction.data.DocumentWithScore;
@@ -72,6 +74,12 @@ public interface TxnMapper {
         @Mapping(source = "range.withEnd", target = "range.withEnd")
     })
     TxnScanRequest scanTo(long startTs, IsolationLevel isolationLevel, StoreInstance.Range range);
+
+    @Mappings({
+        @Mapping(source = "isolationLevel", target = "context.isolationLevel"),
+        @Mapping(source = "copType", target = "copType")
+    })
+    TxnCoprocessorRequest coprocessorReqTo(TxnCoprocessorType copType, IsolationLevel isolationLevel);
 
     @Mapping(source = "isolationLevel", target = "context.isolationLevel")
     TxnBatchGetRequest batchGetTo(long startTs, IsolationLevel isolationLevel, List<byte[]> keys);
