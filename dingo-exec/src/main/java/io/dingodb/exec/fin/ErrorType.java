@@ -17,5 +17,5 @@
 package io.dingodb.exec.fin;
 
 public enum ErrorType {
-    Unknown, TaskFin, WriteConflict, DuplicateEntry, LockWait, TaskCancel, OutOfValueRange
+    Unknown, TaskFin, WriteConflict, DuplicateEntry, LockWait, TaskCancel, OutOfValueRange, InvalidValue
 }

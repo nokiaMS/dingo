@@ -199,6 +199,7 @@ public final class TaskImpl implements Task {
             v.setTask(this);
         });
 
+        ErrorType errorType = null;
         for (Vertex vertex : this.getVertexes().values()) {
             try {
                 vertex.init();
@@ -207,12 +208,21 @@ public final class TaskImpl implements Task {
                         " task:" + this.id.toString() + " failed catch exception:", ex);
                 statusErrMsg = ex.toString();
                 isStatusOK = false;
+
+                if(ex instanceof NumberFormatException) {
+                    errorType = ErrorType.InvalidValue;
+                }
             }
         }
         taskInitStatus = new TaskStatus();
         taskInitStatus.setStatus(isStatusOK);
         taskInitStatus.setTaskId(this.id.toString());
         taskInitStatus.setErrorMsg(statusErrMsg);
+
+        if (errorType == ErrorType.InvalidValue) {
+            taskInitStatus.setErrorType(ErrorType.InvalidValue);
+        }
+
         if (taskInitStatus.getStatus()) {
             status.compareAndSet(Status.BORN, Status.READY);
         }

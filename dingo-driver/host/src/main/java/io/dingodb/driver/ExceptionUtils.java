@@ -113,6 +113,8 @@ public final class ExceptionUtils {
         } else if (throwable instanceof TaskFinException) {
             if(((TaskFinException) throwable).getErrorType() == ErrorType.OutOfValueRange) {
                 return new DingoSqlException(throwable.getMessage());
+            } else if(((TaskFinException) throwable).getErrorType() == ErrorType.InvalidValue) {
+                return new DingoSqlException(throwable.getMessage());
             }
             return toRuntime((TaskFinException) throwable);
         } else if (throwable instanceof RuntimeException) {
