@@ -47,7 +47,11 @@ public class DecimalType extends AbstractScalarType {
 
     @Override
     public DecimalType copy() {
-        return new DecimalType(nullable);
+        DecimalType decimalType = new DecimalType(nullable);
+        decimalType.setPrecision(this.precision);
+        decimalType.setScale(this.scale);
+
+        return decimalType;
     }
 
     @Override

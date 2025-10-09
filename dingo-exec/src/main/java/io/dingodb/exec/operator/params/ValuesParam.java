@@ -20,8 +20,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.dingodb.common.type.DingoType;
+import io.dingodb.common.type.scalar.DecimalType;
 import lombok.Getter;
+import org.apache.calcite.avatica.SqlType;
+import org.apache.calcite.sql.type.SqlTypeName;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -34,6 +40,26 @@ public class ValuesParam extends SourceParam {
     private final DingoType schema;
 
     public ValuesParam(List<Object[]> tuples, DingoType schema) {
+        List<Integer> decimalFiledPos = new ArrayList<Integer>();
+        for (int i = 0; i < schema.fieldCount(); i++) {
+            if (schema.getChild(i) instanceof DecimalType) {
+                DecimalType decimalType = (DecimalType) schema.getChild(i);
+                if (decimalType.getScale() == 0) {
+                    decimalFiledPos.add(i);
+                }
+            }
+        }
+
+        if (!decimalFiledPos.isEmpty()) {
+            for (int i = 0; i < tuples.size(); i++) {
+                Object[] tuple = tuples.get(i);
+                for(int j = 0; j < decimalFiledPos.size(); j++) {
+                    int ind =  decimalFiledPos.get(j);
+                    tuple[ind] = ((BigDecimal) tuple[ind]).setScale(0, RoundingMode.HALF_UP);
+                }
+            }
+        }
+
         this.tuples = tuples;
         this.schema = schema;
     }
