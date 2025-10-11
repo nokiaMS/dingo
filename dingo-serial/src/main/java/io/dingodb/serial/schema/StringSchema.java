@@ -16,11 +16,22 @@
 
 package io.dingodb.serial.schema;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class StringSchema implements DingoSchema {
     private int index;
     private int maxLength;
     private boolean notNull;
     private String defaultValue;
+
+    @Getter
+    @Setter
+    private long precision;
+
+    @Getter
+    @Setter
+    private long scale;
 
     public StringSchema(int index, int maxLength) {
         setIndex(index);

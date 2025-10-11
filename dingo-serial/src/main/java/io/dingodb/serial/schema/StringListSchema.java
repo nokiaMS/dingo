@@ -16,12 +16,23 @@
 
 package io.dingodb.serial.schema;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
 public class StringListSchema implements DingoSchema {
     private int index;
     private boolean notNull;
     private List<String> defaultValue;
+
+    @Getter
+    @Setter
+    private long precision;
+
+    @Getter
+    @Setter
+    private long scale;
 
     public StringListSchema(int index) {
         setIndex(index);
