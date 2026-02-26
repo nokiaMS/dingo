@@ -33,6 +33,8 @@ import io.dingodb.common.CoprocessorV2;
 import io.dingodb.common.concurrent.Executors;
 import io.dingodb.common.log.LogUtils;
 import io.dingodb.common.partition.RangeDistribution;
+import io.dingodb.common.session.Session;
+import io.dingodb.common.session.SessionUtil;
 import io.dingodb.common.store.KeyValue;
 import io.dingodb.common.table.ColumnDefinition;
 import io.dingodb.common.time.DingoTimeZoneContext;
@@ -124,6 +126,11 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         long rowCount = 0;
         String failReason = "";
         try {
+
+            Session session = SessionUtil.INSTANCE.getSession();
+            String sql = "select table_schema, table_name from information_schema.tables";
+            List<Object[]> tables = session.executeQuery(sql);
+
             long start = System.currentTimeMillis();
             // get table info
             MetaService metaService = MetaService.root();
@@ -138,20 +145,20 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
             CommonId tableId = td.getTableId();
 
             startAnalyzeTask(tableId);
-            PartitionService ps = PartitionService.getService(
+            PartitionService ps = PartitionService.getService(  //创建对应表的分区服务对象。
                 Optional.ofNullable(td.getPartitionStrategy())
                     .orElse(DingoPartitionServiceProvider.RANGE_FUNC_NAME));
 
             NavigableMap<ByteArrayUtils.ComparableByteArray, RangeDistribution> rangeDistributionNavigableMap
-                = metaService.getRangeDistribution(tableId);
+                = metaService.getRangeDistribution(tableId);    //根据一个表id返回一个表的所有region。
 
             Set<RangeDistribution> distributions
                 = ps.calcPartitionRange(null, null, true, true,
-                rangeDistributionNavigableMap);
+                rangeDistributionNavigableMap); //获得表的所有region。
 
-            List<Histogram> histogramList = new ArrayList<>();
+            List<Histogram> histogramList = new ArrayList<>();  //在分析的时候一个表中有多个列，此list存储了一个表中所有需要分析的列的直方图，list的每个元素表示表中一个待分析列的直方图。
             List<CountMinSketch> cmSketchList = new ArrayList<>();
-            List<StatsNormal> statsNormals = new ArrayList<>();
+            List<StatsNormal> statsNormals = new ArrayList<>(); //存储了一个表中所有等待分析的列的StatsNormal对性，每个项表示一个列的StatsNormal。
             long end1 = System.currentTimeMillis();
 
             // varchar -> count-min-sketch  int,float,double,date,time,timestamp -> histogram
@@ -160,7 +167,7 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
             // par scan get min, max
             // histogram equ-width need max, min
             try {
-                buildHistogram(histogramList, distributions, tableId, td);
+                buildHistogram(histogramList, distributions, tableId, td);  //构建直方图，但是没有往直方图中添加数据。
             } catch (Exception e) {
                 LogUtils.error(log, e.getMessage(), e);
                 //histogramList.clear();
@@ -192,12 +199,12 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
             }
             long end3 = System.currentTimeMillis();
             LogUtils.info(log, "build stats cost:{}", (end3 - end2));
-            TableStats.mergeStats(statsList);
+            TableStats.mergeStats(statsList);   //聚合统计信息。
             TableStats tableStats = statsList.get(0);
             long end4 = System.currentTimeMillis();
             LogUtils.info(log, "stats merge success cost:{}", (end4 - end3));
 
-            // save stats to store
+            // save stats to store  统计信息持久化。
             addHistogram(tableStats.getHistogramList());
             long end5 = System.currentTimeMillis();
             LogUtils.info(log, "add histogram cost:{}", (end5 - end4));
@@ -208,7 +215,7 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
             long end7 = System.currentTimeMillis();
             LogUtils.info(log, "add stats normal cost:{}", (end7 - end6));
             // update analyze job status
-            cache(tableStats);
+            cache(tableStats);  //更新cache。
             rowCount = tableStats.getRowCount();
             long end = System.currentTimeMillis();
             LogUtils.info(log, "stats collect done, take time:{}, tableName:{}, rowCount:{}",
@@ -246,7 +253,7 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
                                    int cmSketchWidth,
                                    int cmSketchHeight) {
         AtomicInteger index = new AtomicInteger();
-        td.getColumns().forEach(columnDefinition -> {
+        td.getColumns().forEach(columnDefinition -> {   //对表中每一个列都做处理。
             index.incrementAndGet();
             if (columnList != null && !columnList.isEmpty() && !columnList.stream().map(String::toUpperCase).toList()
                 .contains(columnDefinition.getName().toUpperCase())) {
@@ -257,7 +264,8 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
                 || (columnDefinition.getType() instanceof DoubleType)
                 || (columnDefinition.getType() instanceof FloatType)
                 || (columnDefinition.getType() instanceof LongType)
-                || (columnDefinition.getType() instanceof DecimalType)
+                || (columnDefinition.getType() instanceof DecimalType
+                || (columnDefinition.getType() instanceof DateType))
             ) {
                 if (!isIndex(td, columnDefinition)) {
                     return;
@@ -319,8 +327,8 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         StatsCache.statsMap.put(tableStats.getIdentifier(), tableStats);
     }
 
-    private void buildHistogram(List<Histogram> histogramList,
-                                Set<RangeDistribution> rangeDistributions,
+    private void buildHistogram(List<Histogram> histogramList,      //包含了一个表中需要进行统计的所有列的直方图。
+                                Set<RangeDistribution> rangeDistributions,      //包含了表的所有region。
                                 CommonId tableId,
                                 Table td) {
         if (histogramList.isEmpty()) {
@@ -328,7 +336,7 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         }
         List<CompletableFuture<Iterator<Object[]>>> futures = new ArrayList<>();
         DingoTimeZoneProcessor processor = DingoTimeZoneContext.getProcessor();
-        for (RangeDistribution region : rangeDistributions) {
+        for (RangeDistribution region : rangeDistributions) {   //此处的rangeDistributions包含了表中的所有region。
             Supplier<Iterator<Object[]>> supplier = () -> {
                 DingoTimeZoneContext.setProcessor(processor);
                 DingoType outputSchema = DingoTypeFactory.tuple(
@@ -408,15 +416,15 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
             while (iterator.hasNext()) {
                 Object[] tuples = iterator.next();
                 for (int i = 0; i < histogramList.size(); i ++) {
-                    histogramList.get(i).setRegionMax(tuples[2 * i]);
-                    histogramList.get(i).setRegionMin(tuples[2 * i + 1]);
+                    histogramList.get(i).setRegionMax(tuples[2 * i]);       //计算所有region上这个列的最大值。
+                    histogramList.get(i).setRegionMin(tuples[2 * i + 1]);   //计算并更新所有region上这个列的最大值。
                 }
             }
         }
         histogramList.forEach(histogram -> histogram.init(bucketCount));
     }
 
-    private void startAnalyzeTask(CommonId tableId) {
+    private void startAnalyzeTask(CommonId tableId) {   //启动分析任务。
         Object[] values = get(analyzeTaskStore, analyzeTaskCodec, getAnalyzeTaskKeys(schemaName, tableName));
         if (values == null) {
             Long commitCount = 0L;
@@ -500,7 +508,7 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         List<DingoType> dingoTypes = table.getColumns().stream().map(Column::getType).collect(Collectors.toList());
         DingoType schema = DingoTypeFactory.tuple(dingoTypes.toArray(new DingoType[]{}));
 
-        DingoRelConfig config = new DingoRelConfig();
+        DingoRelConfig config = new DingoRelConfig();   //histograms中包含了所有需要进行统计的列的直方图。
         Expr[] exprs = histograms.stream()
             .flatMap(histogram ->
                 Arrays.stream(new Expr[]{makeMaxAgg(histogram.getIndex()), makeMinAgg(histogram.getIndex())})
@@ -532,12 +540,12 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         return null;
     }
 
-    private static Expr makeMaxAgg(int index) {
+    private static Expr makeMaxAgg(int index) { //构建max表达式。
         Expr var = DingoCompileContext.createTupleVar(index);
         return Exprs.op(Exprs.MAX_AGG, var);
     }
 
-    private static Expr makeMinAgg(int index) {
+    private static Expr makeMinAgg(int index) { //构建min表达式。
         Expr var = DingoCompileContext.createTupleVar(index);
         return Exprs.op(Exprs.MIN_AGG, var);
     }
