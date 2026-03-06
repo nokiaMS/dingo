@@ -42,6 +42,7 @@ import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -150,7 +151,20 @@ public class SchedulerService implements io.dingodb.scheduler.SchedulerService {
         }
     }
 
-    public void init() {
+    public void init(Map<String, String> globalVariables) {
+
+        String statsVersionStr = globalVariables.get("stats_version");
+
+        //The default value of stats_version is 2.
+        int statsVersion = 2;
+        if (statsVersionStr != null) {
+            try {
+                statsVersion = Integer.parseInt(statsVersionStr.trim());
+            } catch (NumberFormatException e) {
+                LogUtils.warn(log, "Invalid stats_version: {}", statsVersionStr, e);
+            }
+        }
+
         SessionUtil.INSTANCE.initPool();
         new Thread(
             LoadInfoSchemaTask::watchGlobalSchemaVer

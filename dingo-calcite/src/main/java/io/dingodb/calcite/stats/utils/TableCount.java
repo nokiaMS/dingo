@@ -14,24 +14,34 @@
  * limitations under the License.
  */
 
-package io.dingodb.scheduler;
+package io.dingodb.calcite.stats.utils;
 
-import java.util.Map;
+public class TableCount {
+    private long tableId;
+    private String tableName;
+    private long count;
 
-public interface SchedulerService {
-
-    static SchedulerService getDefault() {
-        return SchedulerServiceProvider.getDefault().get();
+    public long getTableId() {
+        return tableId;
     }
 
-    void start();
+    public void setTableId(long tableId) {
+        this.tableId = tableId;
+    }
 
-    void pause();
+    public String getTableName() {
+        return tableName;
+    }
 
-    boolean add(String id, String cron, Runnable task);
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
 
-    boolean remove(String id);
+    public long getCount() {
+        return count;
+    }
 
-    void init(Map<String, String> globalVariables);
-
+    public void setCount(long count) {
+        this.count = count;
+    }
 }

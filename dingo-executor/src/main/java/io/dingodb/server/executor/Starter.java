@@ -153,7 +153,7 @@ public class Starter {
             log.error("The tenant: {} has been deleted and is unavailable", tenant);
             System.exit(0);
         }
-        schedulerService.init();
+        schedulerService.init(globalVariables);
 
         MysqlNetService mysqlNetService = ServiceLoader.load(MysqlNetServiceProvider.class).iterator().next().get();
         mysqlNetService.listenPort(Configuration.mysqlPort());

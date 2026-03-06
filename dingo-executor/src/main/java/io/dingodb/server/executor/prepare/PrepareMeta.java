@@ -290,6 +290,7 @@ public final class PrepareMeta {
         values.add(new Object[]{"have_ssl", "YES"});
         values.add(new Object[]{"have_statement_timeout", "YES"});
         values.add(new Object[]{"connect_timeout", "3600"});
+        values.add(new Object[]{"stats_version", "2"});
         values.add(new Object[]{"max_execution_time", "0"});
         values.add(new Object[]{"autocommit", "on"});
         values.add(new Object[]{"lock_wait_timeout", "50"});
