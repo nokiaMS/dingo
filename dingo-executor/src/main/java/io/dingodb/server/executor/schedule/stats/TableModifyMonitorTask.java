@@ -36,6 +36,9 @@ import java.util.Map;
 
 import static io.dingodb.common.util.NameCaseUtils.convertName;
 
+/**
+ * Monitors table modification counts and triggers auto analyze tasks when thresholds are met.
+ */
 @Slf4j
 public class TableModifyMonitorTask extends StatsOperator implements Runnable {
 
@@ -44,6 +47,9 @@ public class TableModifyMonitorTask extends StatsOperator implements Runnable {
     private static final BigDecimal MODIFY_COMMIT_RATE = new BigDecimal(0.3);
 
     @Override
+    /**
+     * Scans table commit counts and enqueues analyze tasks when auto-analyze triggers.
+     */
     public void run() {
         // lookup schema -> table commits
         // calculate last commit is the threshold exceeded
@@ -80,17 +86,19 @@ public class TableModifyMonitorTask extends StatsOperator implements Runnable {
     }
 
     /**
-     * auto analyze trigger policy.
-     * @param schemaName schema custom
-     * @param tableName table
-     * @param commitCount update,delete,insert
-     * @return auto analyze flag
+     * Auto analyze trigger policy.
+     *
+     * @param schemaName schema name
+     * @param tableName table name
+     * @param commitCount update, delete, insert count
+     * @return true when auto analyze should be triggered
      */
     public boolean autoAnalyzeTriggerPolicy(String schemaName, String tableName, long commitCount) {
         long processRows = 0;
         KeyValue old;
         Object[] oldValues = null;
         try {
+            //Get the existing analyze task for the table to check its state and processed rows.
             Object[] keys = getAnalyzeTaskKeys(schemaName, tableName);
             old = analyzeTaskStore.get(analyzeTaskCodec.encodeKey(keys));
             if (!(old.getValue() == null || old.getValue().length == 0)) {
@@ -100,6 +108,10 @@ public class TableModifyMonitorTask extends StatsOperator implements Runnable {
                 if (oldValues[3] != null) {
                     processRows = (long) oldValues[3];
                 }
+
+                /* If the existing analyze task is in PENDING or RUNNING state, we should not trigger a new analyze task.
+                 * If the existing task is in INIT state, we can update the commit count and check if it exceeds the threshold.
+                 */
                 if (oldValues[6] != null) {
                     String state = (String) oldValues[6];
                     if (StatsTaskState.PENDING.getState().equalsIgnoreCase(state)
@@ -125,6 +137,10 @@ public class TableModifyMonitorTask extends StatsOperator implements Runnable {
             BigDecimal rate = modify.divide(count, 2, RoundingMode.HALF_UP);
             res = rate.compareTo(MODIFY_COMMIT_RATE) > 0;
         }
+
+        /* If the trigger condition is not met but there is an existing analyze task record,
+         * we should update the commit count in the record.
+         */
         if (!res && oldValues != null) {
             Object[] row = generateAnalyzeTask(schemaName, tableName, 0, commitCount);
             row[6] = StatsTaskState.INIT.getState();
@@ -146,6 +162,12 @@ public class TableModifyMonitorTask extends StatsOperator implements Runnable {
         return res;
     }
 
+    /**
+     * Merges analyze task state and persists the updated record.
+     *
+     * @param oldValues existing record values
+     * @param row new record values to merge
+     */
     private static void mergeAnalyzeRecord(Object[] oldValues, Object[] row) {
         row[11] = oldValues[11];
         row[12] = oldValues[12];

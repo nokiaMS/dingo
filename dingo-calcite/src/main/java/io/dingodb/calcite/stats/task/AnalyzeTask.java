@@ -101,6 +101,9 @@ import static io.dingodb.common.util.NoBreakFunctions.wrap;
 @Builder
 @Slf4j
 @ToString
+/**
+ * Collects table statistics (histograms, sketches, and normals) and persists analyze task state.
+ */
 public class AnalyzeTask extends StatsOperator implements Runnable {
     private String schemaName;
     private String tableName;
@@ -120,6 +123,9 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
 
 
     @Override
+    /**
+     * Executes the analyze pipeline: collects stats per region, merges results, and persists metadata.
+     */
     public void run() {
         long rowCount = 0;
         String failReason = "";
@@ -137,6 +143,7 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
             }
             CommonId tableId = td.getTableId();
 
+            //Start analyze task, set state to running.
             startAnalyzeTask(tableId);
             PartitionService ps = PartitionService.getService(
                 Optional.ofNullable(td.getPartitionStrategy())
@@ -220,6 +227,17 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         endAnalyzeTask(failReason, rowCount);
     }
 
+    /**
+     * Builds async tasks to collect per-region stats.
+     *
+     * @param td table metadata
+     * @param tableId table id
+     * @param rangeDistributions table partitions
+     * @param cmSketchList count-min sketches to fill
+     * @param statsNormals normal stats to fill
+     * @param columnHistograms histograms to fill
+     * @return futures for region stats
+     */
     private List<CompletableFuture<TableStats>> getCompletableFutures(
         Table td,
         CommonId tableId,
@@ -239,6 +257,9 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Initializes per-column metric collectors based on column types and index coverage.
+     */
     private void typeMetricAdaptor(Table td,
                                    List<Histogram> histogramCdList,
                                    List<CountMinSketch> cmSketchCdList,
@@ -280,6 +301,9 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         });
     }
 
+    /**
+     * Persists histogram records to the buckets store.
+     */
     private void addHistogram(List<Histogram> histogramList) {
         List<Object[]> paramList = histogramList.stream().map(histogram -> {
             String histogramDetail = histogram.serialize();
@@ -290,6 +314,9 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         upsert(bucketsStore, bucketsCodec, paramList);
     }
 
+    /**
+     * Persists count-min sketch records to the sketch store.
+     */
     private void addCountMinSketch(List<CountMinSketch> countMinSketches) {
         List<Object[]> paramList = countMinSketches.stream().map(countMinSketch -> {
             String cmSketch = countMinSketch.serialize();
@@ -304,6 +331,9 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         LogUtils.info(log, "add sketch done, take time:{}", (end - start));
     }
 
+    /**
+     * Persists normal statistics to the stats store.
+     */
     private void addStatsNormal(List<StatsNormal> statsNormals, long tableId) {
         List<Object[]> paramList = statsNormals.stream().map(statsNormal ->
             new Object[] {schemaName, tableName, statsNormal.getColumnName(), tableId, statsNormal.getNdv(),
@@ -314,11 +344,17 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         upsert(statsStore, statsCodec, paramList);
     }
 
+    /**
+     * Caches the merged table stats in memory for query planning.
+     */
     private static void cache(TableStats tableStats) {
         tableStats.initRowCount();
         StatsCache.statsMap.put(tableStats.getIdentifier(), tableStats);
     }
 
+    /**
+     * Builds histograms by scanning partitions and computing min/max per region.
+     */
     private void buildHistogram(List<Histogram> histogramList,
                                 Set<RangeDistribution> rangeDistributions,
                                 CommonId tableId,
@@ -416,8 +452,17 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         histogramList.forEach(histogram -> histogram.init(bucketCount));
     }
 
+    /**
+     * Marks the analyze task as running and stores execution parameters.
+     */
     private void startAnalyzeTask(CommonId tableId) {
+        //Get analyze task record for the table.
         Object[] values = get(analyzeTaskStore, analyzeTaskCodec, getAnalyzeTaskKeys(schemaName, tableName));
+
+        /* If no existing record, generate a new analyze task with initial parameters.
+         * If existing record is found, it means a previous analyze task has been triggered.
+         * We will update the existing record to set state to running and update the analyze parameters.
+         */
         if (values == null) {
             Long commitCount = 0L;
             try {
@@ -436,6 +481,8 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         values[4] = current;
         values[6] = StatsTaskState.RUNNING.getState();
         values[10] = current;
+
+        //Persist the analyze task state to the store.
         try {
             upsert(analyzeTaskStore, analyzeTaskCodec, Collections.singletonList(values));
         } catch (Exception e) {
@@ -443,6 +490,9 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         }
     }
 
+    /**
+     * Finalizes the analyze task state and updates execution counters.
+     */
     private void endAnalyzeTask(String failReason, long rowCount) {
         Object[] values = get(analyzeTaskStore, analyzeTaskCodec, getAnalyzeTaskKeys(schemaName, tableName));
         if (values == null) {
@@ -484,6 +534,9 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         upsert(analyzeTaskStore, analyzeTaskCodec, Collections.singletonList(values));
     }
 
+    /**
+     * Serializes analyze parameters for persistence.
+     */
     private String getAnalyzeParam() {
         AnalyzeInfo analyzeInfo = new AnalyzeInfo(cmSketchHeight, cmSketchWidth, bucketCount, columnList);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -495,6 +548,9 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         }
     }
 
+    /**
+     * Builds a coprocessor that computes min/max aggregates for histogram columns.
+     */
     public static CoprocessorV2 getCoprocessor(Table table, List<Histogram> histograms, DingoType outputSchema) {
         CommonId tableId = table.tableId;
         List<DingoType> dingoTypes = table.getColumns().stream().map(Column::getType).collect(Collectors.toList());
@@ -532,16 +588,25 @@ public class AnalyzeTask extends StatsOperator implements Runnable {
         return null;
     }
 
+    /**
+     * Creates a MAX aggregate expression for the given column index.
+     */
     private static Expr makeMaxAgg(int index) {
         Expr var = DingoCompileContext.createTupleVar(index);
         return Exprs.op(Exprs.MAX_AGG, var);
     }
 
+    /**
+     * Creates a MIN aggregate expression for the given column index.
+     */
     private static Expr makeMinAgg(int index) {
         Expr var = DingoCompileContext.createTupleVar(index);
         return Exprs.op(Exprs.MIN_AGG, var);
     }
 
+    /**
+     * Checks whether a column is indexed by primary key or scalar index.
+     */
     private static boolean isIndex(Table td, Column columnDefinition) {
         if (columnDefinition.isPrimary()) {
             return true;

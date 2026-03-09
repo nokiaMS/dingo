@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package io.dingodb.calcite.stats.utils;
+package io.dingodb.common.stats.utils;
+
+import io.dingodb.common.CommonId;
 
 public class TableCount {
-    private long tableId;
+    private CommonId tableId;
     private String tableName;
     private long count;
 
-    public long getTableId() {
+    public CommonId getTableId() {
         return tableId;
     }
 
-    public void setTableId(long tableId) {
+    public void setTableId(CommonId tableId) {
         this.tableId = tableId;
     }
 

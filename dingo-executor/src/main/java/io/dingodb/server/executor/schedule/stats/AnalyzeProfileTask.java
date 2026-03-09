@@ -23,9 +23,15 @@ import lombok.extern.slf4j.Slf4j;
 import static io.dingodb.common.util.NameCaseUtils.convertName;
 
 @Slf4j
+/**
+ * Consumes analyze events from the statement summary queue and triggers auto-analyze checks.
+ */
 public class AnalyzeProfileTask extends TableModifyMonitorTask implements Runnable {
 
     @Override
+    /**
+     * Blocks on analyze events and evaluates auto-analyze policy for each event.
+     */
     public void run() {
         while (!Thread.interrupted()) {
             AnalyzeEvent analyzeEvent = StmtSummaryMap.getAnalyzeEvent();

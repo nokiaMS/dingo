@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package io.dingodb.calcite.stats.utils;
+package io.dingodb.common.stats.utils;
+
+import io.dingodb.common.CommonId;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StatsTableModifyInfo {
-    private final ConcurrentHashMap<Long, TableCount> tableCountMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<CommonId, TableCount> tableCountMap = new ConcurrentHashMap<>();
 
     public void addTableModifyInfo(TableCount tableCount) {
         if (tableCount == null) {
@@ -29,7 +31,14 @@ public class StatsTableModifyInfo {
         addTableCount(tableCount.getTableId(), tableCount);
     }
 
-    public void addTableCount(long tableId, TableCount tableCount) {
+    public void addTableCount(CommonId tableId, long count) {
+        addTableCount(tableId, new TableCount() {{
+            setTableId(tableId);
+            setCount(count);
+        }});
+    }
+
+    public void addTableCount(CommonId tableId, TableCount tableCount) {
         if (tableCount == null) {
             return;
         }
@@ -39,11 +48,11 @@ public class StatsTableModifyInfo {
         });
     }
 
-    public ConcurrentHashMap<Long, TableCount> getTableCountMap() {
+    public ConcurrentHashMap<CommonId, TableCount> getTableCountMap() {
         return tableCountMap;
     }
 
-    public long getTableCount(long tableId) {
+    public long getTableCount(CommonId tableId) {
         TableCount tableCount = tableCountMap.get(tableId);
         return tableCount == null ? 0L : tableCount.getCount();
     }

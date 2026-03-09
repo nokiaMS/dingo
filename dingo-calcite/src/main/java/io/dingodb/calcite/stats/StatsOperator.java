@@ -45,32 +45,57 @@ import static io.dingodb.common.util.NameCaseUtils.convertName;
 import static io.dingodb.common.util.NameCaseUtils.convertSql;
 
 @Slf4j
+/**
+ * Provides shared helpers and static resources for stats metadata and analyze task operations.
+ */
 public abstract class StatsOperator {
+    /** Global store transaction service for stats operations. */
     public static StoreTxnService storeTxnService;
+    /** Meta service bound to the mysql schema. */
     public static MetaService metaService;
 
+    /** Analyze task table name. */
     public static final String ANALYZE_TASK = "analyze_task";
+    /** Table buckets metadata table name. */
     public static final String TABLE_BUCKETS = "table_buckets";
+    /** Table statistics metadata table name. */
     public static final String TABLE_STATS = "table_stats";
+    /** CM sketch metadata table name. */
     public static final String CM_SKETCH = "cm_sketch";
 
+    /** Analyze task table metadata. */
     public static Table analyzeTaskTable;
+    /** Table buckets metadata. */
     public static Table bucketsTable;
+    /** Table stats metadata. */
     public static Table statsTable;
+    /** CM sketch metadata. */
     public static Table cmSketchTable;
+    /** Analyze task table id. */
     public static CommonId analyzeTaskTblId;
+    /** Table buckets id. */
     public static CommonId bucketsTblId;
+    /** Table stats id. */
     public static CommonId statsTblId;
+    /** CM sketch table id. */
     public static CommonId cmSketchTblId;
 
+    /** Analyze task key/value codec. */
     public static KeyValueCodec analyzeTaskCodec;
+    /** Table buckets key/value codec. */
     public static KeyValueCodec bucketsCodec;
+    /** Table stats key/value codec. */
     public static KeyValueCodec statsCodec;
+    /** CM sketch key/value codec. */
     public static KeyValueCodec cmSketchCodec;
 
+    /** Analyze task transaction store. */
     public static StoreKvTxn analyzeTaskStore;
+    /** Table buckets transaction store. */
     public static StoreKvTxn bucketsStore;
+    /** Table stats transaction store. */
     public static StoreKvTxn statsStore;
+    /** CM sketch transaction store. */
     public static StoreKvTxn cmSketchStore;
 
     static {
@@ -114,6 +139,12 @@ public abstract class StatsOperator {
         }
     }
 
+    /**
+     * Resolves the first region id for a table from its range distribution.
+     *
+     * @param tableId table id
+     * @return region id
+     */
     public static CommonId getRegionId(CommonId tableId) {
         return Optional.ofNullable(metaService.getRangeDistribution(tableId))
             .map(NavigableMap::firstEntry)
@@ -122,6 +153,13 @@ public abstract class StatsOperator {
             .orElseThrow("Cannot get region for " + tableId);
     }
 
+    /**
+     * Inserts or updates each row in the provided list.
+     *
+     * @param store target kv transaction store
+     * @param codec row codec
+     * @param rowList rows to upsert
+     */
     public static void upsert(StoreKvTxn store, KeyValueCodec codec, List<Object[]> rowList) {
         rowList.forEach(row -> {
             KeyValue old = store.get(codec.encodeKey(row));
@@ -134,9 +172,22 @@ public abstract class StatsOperator {
         });
     }
 
+    /**
+     * Deletes stats for the given schema and table (currently unused).
+     *
+     * @param schemaName schema name
+     * @param tableName table name
+     */
     public static void delStats(String schemaName, String tableName) {
     }
 
+    /**
+     * Deletes stats rows in the specified stats table.
+     *
+     * @param table stats table name
+     * @param schemaName schema name
+     * @param tableName table name
+     */
     public static void delStats(String table, String schemaName, String tableName) {
         String sqlTemp = "delete from %s where schema_name='%s' and table_name='%s'";
         String sql = convertSql(String.format(sqlTemp, table, schemaName, tableName));
@@ -147,6 +198,14 @@ public abstract class StatsOperator {
         }
     }
 
+    /**
+     * Scans a range distribution and decodes rows into object arrays.
+     *
+     * @param store kv transaction store
+     * @param codec row codec
+     * @param rangeDistribution scan range
+     * @return decoded rows
+     */
     public List<Object[]> scan(StoreKvTxn store, KeyValueCodec codec, RangeDistribution rangeDistribution) {
         try {
             Iterator<KeyValue> iterator = store.range(
@@ -162,6 +221,14 @@ public abstract class StatsOperator {
         }
     }
 
+    /**
+     * Fetches a single row by key and decodes it.
+     *
+     * @param store kv transaction store
+     * @param codec row codec
+     * @param key row key values
+     * @return decoded row or null when not found
+     */
     public static Object[] get(StoreKvTxn store, KeyValueCodec codec, Object[] key) {
         try {
             KeyValue keyValue = store.get(codec.encodeKey(key));
@@ -174,6 +241,13 @@ public abstract class StatsOperator {
         }
     }
 
+    /**
+     * Builds analyze task primary key values for the given table.
+     *
+     * @param schemaName schema name
+     * @param tableName table name
+     * @return key values array
+     */
     public Object[] getAnalyzeTaskKeys(String schemaName, String tableName) {
         Object[] values = new Object[analyzeTaskTable.getColumns().size()];
         values[0] = schemaName;
@@ -181,6 +255,15 @@ public abstract class StatsOperator {
         return values;
     }
 
+    /**
+     * Creates an analyze task row with initial metadata.
+     *
+     * @param schemaName schema name
+     * @param tableName table name
+     * @param totalCount table row count
+     * @param modifyCount modified row count
+     * @return row values for analyze task
+     */
     public static Object[] generateAnalyzeTask(String schemaName,
                                                String tableName,
                                                long totalCount,
@@ -190,6 +273,12 @@ public abstract class StatsOperator {
             new Timestamp(System.currentTimeMillis()), 0, 0, 0, 0};
     }
 
+    /**
+     * Looks up a table from the mysql schema, retrying for a limited time.
+     *
+     * @param tableName table name
+     * @return resolved table
+     */
     public static Table getTable(String tableName) {
         int times = 10;
         DdlService ddlService = DdlService.root();

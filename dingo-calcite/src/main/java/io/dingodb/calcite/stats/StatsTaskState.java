@@ -16,19 +16,38 @@
 
 package io.dingodb.calcite.stats;
 
+/**
+ * States for statistics analyze tasks.
+ */
 public enum StatsTaskState {
+    /** Initial state before analysis is scheduled. */
     INIT("INIT"),
+    /** Waiting to be picked up by the analyzer. */
     PENDING("PENDING"),
+    /** Analysis is currently running. */
     RUNNING("RUNNING"),
+    /** Analysis completed successfully. */
     SUCCESS("SUCCESS"),
+    /** Analysis completed with failure. */
     FAIL("FAIL");
 
+    /**
+     * Creates a state enum with the provided string value.
+     *
+     * @param state state string
+     */
     StatsTaskState(String state) {
         this.state = state;
     }
 
+    /** String value persisted for this state. */
     private String state;
 
+    /**
+     * Returns the string representation of the state.
+     *
+     * @return state string
+     */
     public String getState() {
         return state;
     }
