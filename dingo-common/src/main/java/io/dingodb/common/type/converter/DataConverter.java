@@ -26,6 +26,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.apache.calcite.avatica.util.ByteString;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.sql.Time;
@@ -33,7 +35,6 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -232,7 +233,18 @@ public interface DataConverter {
     }
 
     default BigDecimal convertDecimalFrom(@NonNull Object value, int precision, int scale) {
-        return convertDecimalFrom(value);
+        BigDecimal bd;
+        if (value instanceof BigDecimal) {
+            bd = (BigDecimal) value;
+        } else {
+            try {
+                bd = new BigDecimal(value.toString());
+            } catch (Exception e) {
+                return BigDecimal.ZERO;
+            }
+        }
+
+        return bd.setScale(scale, RoundingMode.HALF_UP);
     }
 
     default BigDecimal convertDecimalFrom(@NonNull Object value) {
