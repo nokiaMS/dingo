@@ -18,6 +18,8 @@ package io.dingodb.server.executor.schedule.stats;
 
 import io.dingodb.calcite.stats.StatsOperator;
 import io.dingodb.calcite.stats.StatsTaskState;
+import io.dingodb.calcite.stats.utils.AnalyzeTaskMapper;
+import io.dingodb.calcite.stats.utils.AnalyzeTaskMapperFactory;
 import io.dingodb.common.CommonId;
 import io.dingodb.common.log.LogUtils;
 import io.dingodb.common.store.KeyValue;
@@ -31,6 +33,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -97,6 +100,8 @@ public class TableModifyMonitorTask extends StatsOperator implements Runnable {
         long processRows = 0;
         KeyValue old;
         Object[] oldValues = null;
+        AnalyzeTaskMapper analyzeTaskMapper = null;
+
         try {
             //Get the existing analyze task for the table to check its state and processed rows.
             Object[] keys = getAnalyzeTaskKeys(schemaName, tableName);
@@ -105,58 +110,64 @@ public class TableModifyMonitorTask extends StatsOperator implements Runnable {
                 oldValues = analyzeTaskCodec.decode(old);
             }
             if (oldValues != null) {
-                if (oldValues[3] != null) {
-                    processRows = (long) oldValues[3];
+                analyzeTaskMapper = AnalyzeTaskMapperFactory.fromValues(oldValues);
+                if (analyzeTaskMapper.getProcessedRows() != null) {
+                    processRows = analyzeTaskMapper.getProcessedRows();
                 }
 
                 /* If the existing analyze task is in PENDING or RUNNING state, we should not trigger a new analyze task.
                  * If the existing task is in INIT state, we can update the commit count and check if it exceeds the threshold.
                  */
-                if (oldValues[6] != null) {
-                    String state = (String) oldValues[6];
+                if (analyzeTaskMapper.getState() != null) {
+                    String state = analyzeTaskMapper.getState();
                     if (StatsTaskState.PENDING.getState().equalsIgnoreCase(state)
                         || StatsTaskState.RUNNING.getState().equalsIgnoreCase(state)) {
                         return false;
                     } else if (StatsTaskState.INIT.getState().equalsIgnoreCase(state)) {
-                        if (oldValues[9] != null) {
-                            long modify = (long) oldValues[9];
-                            commitCount += modify;
+                        if (analyzeTaskMapper.getModifyCount() != null) {
+                            commitCount += analyzeTaskMapper.getModifyCount();
                         }
                     }
                 }
+            } else {
+                AnalyzeTaskMapper analyzeTaskMapperNew = new AnalyzeTaskMapper(schemaName, tableName, StatsTaskState.INIT.getState(), 0, commitCount);
+                upsert(analyzeTaskStore, analyzeTaskCodec, Collections.singletonList(analyzeTaskMapperNew.toObjectArray()));
             }
         } catch (Exception e) {
             LogUtils.error(log, e.getMessage(), e);
         }
-        boolean res = false;
-        if (processRows == 0 && commitCount > 10000) {
-            res = true;
-        } else if (commitCount > 10000 && processRows > 10000) {
-            BigDecimal modify = new BigDecimal(commitCount);
-            BigDecimal count = new BigDecimal(processRows);
-            BigDecimal rate = modify.divide(count, 2, RoundingMode.HALF_UP);
-            res = rate.compareTo(MODIFY_COMMIT_RATE) > 0;
-        }
 
-        /* If the trigger condition is not met but there is an existing analyze task record,
-         * we should update the commit count in the record.
-         */
-        if (!res && oldValues != null) {
-            Object[] row = generateAnalyzeTask(schemaName, tableName, 0, commitCount);
-            row[6] = StatsTaskState.INIT.getState();
-            mergeAnalyzeRecord(oldValues, row);
-        } else {
-            if (!res) {
-                return false;
+        boolean res = false;
+        if(false) {
+            if (processRows == 0 && commitCount > 10000) {
+                res = true;
+            } else if (commitCount > 10000 && processRows > 10000) {
+                BigDecimal modify = new BigDecimal(commitCount);
+                BigDecimal count = new BigDecimal(processRows);
+                BigDecimal rate = modify.divide(count, 2, RoundingMode.HALF_UP);
+                res = rate.compareTo(MODIFY_COMMIT_RATE) > 0;
             }
-            Object[] row = generateAnalyzeTask(schemaName, tableName, 0, commitCount);
-            LogUtils.info(log, "{}.{} auto analyze start, modify:{}",
-                schemaName, tableName, commitCount);
-            if (oldValues == null) {
-                KeyValue keyValue = analyzeTaskCodec.encode(row);
-                analyzeTaskStore.insert(keyValue.getKey(), keyValue.getValue());
-            } else {
+
+            /* If the trigger condition is not met but there is an existing analyze task record,
+             * we should update the commit count in the record.
+             */
+            if (!res && oldValues != null) {
+                Object[] row = generateAnalyzeTask(schemaName, tableName, 0, commitCount);
+                row[6] = StatsTaskState.INIT.getState();
                 mergeAnalyzeRecord(oldValues, row);
+            } else {
+                if (!res) {
+                    return false;
+                }
+                Object[] row = generateAnalyzeTask(schemaName, tableName, 0, commitCount);
+                LogUtils.info(log, "{}.{} auto analyze start, modify:{}",
+                    schemaName, tableName, commitCount);
+                if (oldValues == null) {
+                    KeyValue keyValue = analyzeTaskCodec.encode(row);
+                    analyzeTaskStore.insert(keyValue.getKey(), keyValue.getValue());
+                } else {
+                    mergeAnalyzeRecord(oldValues, row);
+                }
             }
         }
         return res;

@@ -230,10 +230,10 @@ public class StmtSummary {
                     && execProfile.getLastTuple()[0] instanceof Long) {
                     long affectRows = (long) execProfile.getLastTuple()[0];
                     this.sumAffectedRows += affectRows;
-                    if (profile.isAutoCommit()) {
+                    //if (profile.isAutoCommit()) {
                         this.analyzeInc += affectRows;
                         autoAnalyze();
-                    }
+                    //}
                     if (this.maxAffectedRows < affectRows) {
                         this.maxAffectedRows = affectRows;
                     }
@@ -274,7 +274,7 @@ public class StmtSummary {
     }
 
     public void autoAnalyze() {
-        if (analyzeInc > 10000 && tableList != null && tableList.size() == 1 && tableList.get(0) != null) {
+        if (analyzeInc >=1 && tableList != null && tableList.size() == 1 && tableList.get(0) != null) {
             String[] fullTables = tableList.get(0).split("\\.");
             String schemaName = fullTables[0];
             String tableName = fullTables[1];
